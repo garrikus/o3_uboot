@@ -3182,6 +3182,9 @@ omap3_overo_config :	unconfig
 omap3_evm_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 evm ti omap3
 
+omap3_orion_config :	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 orion navis omap3
+
 omap3_pandora_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 pandora NULL omap3
 
