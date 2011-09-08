@@ -196,14 +196,14 @@
 #define CONFIG_JFFS2_PART_SIZE		0xf980000	/* sz of jffs2 part */
 
 /* Environment information */
-#define CONFIG_BOOTDELAY	10
+#define CONFIG_BOOTDELAY	2
 
 #define CONFIG_BOOTFILE		uImage
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"loadaddr=0x82000000\0" \
 	"usbtty=cdc_acm\0" \
-	"console=ttyO0,115200n8\0" \
+	"console=ttyO2,115200n8\0" \
 	"mmcargs=setenv bootargs console=${console} " \
 		"root=/dev/mmcblk0p2 rw " \
 		"rootfstype=ext3 rootwait\0" \
@@ -219,7 +219,7 @@
 		"bootm ${loadaddr}\0" \
 	"nandboot=echo Booting from nand ...; " \
 		"run nandargs; " \
-		"onenand read ${loadaddr} 280000 400000; " \
+		"nand read ${loadaddr} 280000 400000; " \
 		"bootm ${loadaddr}\0" \
 
 #define CONFIG_BOOTCOMMAND \
@@ -241,7 +241,7 @@
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser */
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
-#define CONFIG_SYS_PROMPT		"OMAP3_EVM # "
+#define CONFIG_SYS_PROMPT		"ORION # "
 #define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
