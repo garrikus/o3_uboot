@@ -25,7 +25,7 @@
 
 const omap3_sysinfo sysinfo = {
 	DDR_DISCRETE,
-	"OMAP3 EVM board",
+	"Orion board",
 #if defined(CONFIG_ENV_IS_IN_ONENAND)
 	"OneNAND",
 #else
@@ -48,7 +48,579 @@ enum {
 u8 get_omap3_evm_rev(void);
 
 static void setup_net_chip(void);
+/*
+ * M0 - Mux mode 0
+ * M1 - Mux mode 1
+ * M2 - Mux mode 2
+ * M3 - Mux mode 3
+ * M4 - Mux mode 4
+ * M5 - Mux mode 5
+ * M6 - Mux mode 6
+ * M7 - Mux mode 7
+ * IDIS - Input disabled
+ * IEN - Input enabled
+ * PD - Active-mode pull-down enabled
+ * PU - Active-mode pull-up enabled
+ * PI - Active-mode pull inhibited
+ * SB_LOW - Standby mode configuration: Output low-level
+ * SB_HI - Standby mode configuration: Output high-level
+ * SB_HIZ - Standby mode configuration: Output hi-impedence
+ * SB_PD - Standby mode pull-down enabled
+ * SB_PU - Standby mode pull-up enabled
+ * WKEN - Wakeup input enabled
+ */
 
+#define M0 0
+#define M1 1
+#define M2 2
+#define M3 3
+#define M4 4
+#define M5 5
+#define M6 6
+#define M7 7
+#define IDIS (0 << 8)
+#define IEN (1 << 8)
+#define PD (1 << 3)
+#define PU (3 << 3)
+#define PI (0 << 3)
+#define SB_LOW (1 << 9)
+#define SB_HI (5 << 9)
+#define SB_HIZ (2 << 9)
+#define SB_PD (1 << 12)
+#define SB_PU (3 << 12)
+#define WKEN (1 << 14)
+
+/*
+ * To get the physical address the offset has
+ * to be added to OMAP34XX_CTRL_BASE
+ */
+
+#define CONTROL_PADCONF_GPIO_112                  0x0134
+#define CONTROL_PADCONF_GPIO_113                  0x0136
+#define CONTROL_PADCONF_GPIO_114                  0x0138
+#define CONTROL_PADCONF_GPIO_115                  0x013A
+#define CONTROL_PADCONF_CAM_D0                    0x0116
+#define CONTROL_PADCONF_CAM_D1                    0x0118
+#define CONTROL_PADCONF_CAM_D2                    0x011A
+#define CONTROL_PADCONF_CAM_D3                    0x011C
+#define CONTROL_PADCONF_CAM_D4                    0x011E
+#define CONTROL_PADCONF_CAM_D5                    0x0120
+#define CONTROL_PADCONF_CAM_D6                    0x0122
+#define CONTROL_PADCONF_CAM_D7                    0x0124
+#define CONTROL_PADCONF_CAM_D8                    0x0126
+#define CONTROL_PADCONF_CAM_D9                    0x0128
+#define CONTROL_PADCONF_CAM_D10                   0x012A
+#define CONTROL_PADCONF_CAM_D11                   0x012C
+#define CONTROL_PADCONF_CAM_FLD                   0x0114
+#define CONTROL_PADCONF_CAM_HS                    0x010C
+#define CONTROL_PADCONF_CAM_PCLK                  0x0112
+#define CONTROL_PADCONF_CAM_STROBE                0x0132
+#define CONTROL_PADCONF_CAM_VS                    0x010E
+#define CONTROL_PADCONF_CAM_WEN                   0x0130
+#define CONTROL_PADCONF_CAM_XCLKA                 0x0110
+#define CONTROL_PADCONF_CAM_XCLKB                 0x012E
+#define CONTROL_PADCONF_DSS_ACBIAS                0x00DA
+#define CONTROL_PADCONF_DSS_DATA0                 0x00DC
+#define CONTROL_PADCONF_DSS_DATA1                 0x00DE
+#define CONTROL_PADCONF_DSS_DATA2                 0x00E0
+#define CONTROL_PADCONF_DSS_DATA3                 0x00E2
+#define CONTROL_PADCONF_DSS_DATA4                 0x00E4
+#define CONTROL_PADCONF_DSS_DATA5                 0x00E6
+#define CONTROL_PADCONF_DSS_DATA6                 0x00E8
+#define CONTROL_PADCONF_DSS_DATA7                 0x00EA
+#define CONTROL_PADCONF_DSS_DATA8                 0x00EC
+#define CONTROL_PADCONF_DSS_DATA9                 0x00EE
+#define CONTROL_PADCONF_DSS_DATA10                0x00F0
+#define CONTROL_PADCONF_DSS_DATA11                0x00F2
+#define CONTROL_PADCONF_DSS_DATA12                0x00F4
+#define CONTROL_PADCONF_DSS_DATA13                0x00F6
+#define CONTROL_PADCONF_DSS_DATA14                0x00F8
+#define CONTROL_PADCONF_DSS_DATA15                0x00FA
+#define CONTROL_PADCONF_DSS_DATA16                0x00FC
+#define CONTROL_PADCONF_DSS_DATA17                0x00FE
+#define CONTROL_PADCONF_DSS_DATA18                0x0100
+#define CONTROL_PADCONF_DSS_DATA19                0x0102
+#define CONTROL_PADCONF_DSS_DATA20                0x0104
+#define CONTROL_PADCONF_DSS_DATA21                0x0106
+#define CONTROL_PADCONF_DSS_DATA22                0x0108
+#define CONTROL_PADCONF_DSS_DATA23                0x010A
+#define CONTROL_PADCONF_DSS_HSYNC                 0x00D6
+#define CONTROL_PADCONF_DSS_PCLK                  0x00D4
+#define CONTROL_PADCONF_DSS_VSYNC                 0x00D8
+#define CONTROL_PADCONF_ETK_CLK_ES2               0x05D8
+#define CONTROL_PADCONF_ETK_CTL_ES2               0x05DA
+#define CONTROL_PADCONF_ETK_D0_ES2                0x05DC
+#define CONTROL_PADCONF_ETK_D1_ES2                0x05DE
+#define CONTROL_PADCONF_ETK_D2_ES2                0x05E0
+#define CONTROL_PADCONF_ETK_D3_ES2                0x05E2
+#define CONTROL_PADCONF_ETK_D4_ES2                0x05E4
+#define CONTROL_PADCONF_ETK_D5_ES2                0x05E6
+#define CONTROL_PADCONF_ETK_D6_ES2                0x05E8
+#define CONTROL_PADCONF_ETK_D7_ES2                0x05EA
+#define CONTROL_PADCONF_ETK_D8_ES2                0x05EC
+#define CONTROL_PADCONF_ETK_D9_ES2                0x05EE
+#define CONTROL_PADCONF_ETK_D10_ES2               0x05F0
+#define CONTROL_PADCONF_ETK_D11_ES2               0x05F2
+#define CONTROL_PADCONF_ETK_D12_ES2               0x05F4
+#define CONTROL_PADCONF_ETK_D13_ES2               0x05F6
+#define CONTROL_PADCONF_ETK_D14_ES2               0x05F8
+#define CONTROL_PADCONF_ETK_D15_ES2               0x05FA
+#define CONTROL_PADCONF_GPMC_A1                   0x007A
+#define CONTROL_PADCONF_GPMC_A2                   0x007C
+#define CONTROL_PADCONF_GPMC_A3                   0x007E
+#define CONTROL_PADCONF_GPMC_A4                   0x0080
+#define CONTROL_PADCONF_GPMC_A5                   0x0082
+#define CONTROL_PADCONF_GPMC_A6                   0x0084
+#define CONTROL_PADCONF_GPMC_A7                   0x0086
+#define CONTROL_PADCONF_GPMC_A8                   0x0088
+#define CONTROL_PADCONF_GPMC_A9                   0x008A
+#define CONTROL_PADCONF_GPMC_A10                  0x008C
+#define CONTROL_PADCONF_GPMC_CLK                  0x00BE
+#define CONTROL_PADCONF_GPMC_D0                   0x008E
+#define CONTROL_PADCONF_GPMC_D1                   0x0090
+#define CONTROL_PADCONF_GPMC_D2                   0x0092
+#define CONTROL_PADCONF_GPMC_D3                   0x0094
+#define CONTROL_PADCONF_GPMC_D4                   0x0096
+#define CONTROL_PADCONF_GPMC_D5                   0x0098
+#define CONTROL_PADCONF_GPMC_D6                   0x009A
+#define CONTROL_PADCONF_GPMC_D7                   0x009C
+#define CONTROL_PADCONF_GPMC_D8                   0x009E
+#define CONTROL_PADCONF_GPMC_D9                   0x00A0
+#define CONTROL_PADCONF_GPMC_D10                  0x00A2
+#define CONTROL_PADCONF_GPMC_D11                  0x00A4
+#define CONTROL_PADCONF_GPMC_D12                  0x00A6
+#define CONTROL_PADCONF_GPMC_D13                  0x00A8
+#define CONTROL_PADCONF_GPMC_D14                  0x00AA
+#define CONTROL_PADCONF_GPMC_D15                  0x00AC
+#define CONTROL_PADCONF_GPMC_NADV_ALE             0x00C0
+#define CONTROL_PADCONF_GPMC_NBE0_CLE             0x00C6
+#define CONTROL_PADCONF_GPMC_NBE1                 0x00C8
+#define CONTROL_PADCONF_GPMC_NCS0                 0x00AE
+#define CONTROL_PADCONF_GPMC_NCS1                 0x00B0
+#define CONTROL_PADCONF_GPMC_NCS2                 0x00B2
+#define CONTROL_PADCONF_GPMC_NCS3                 0x00B4
+#define CONTROL_PADCONF_GPMC_NCS4                 0x00B6
+#define CONTROL_PADCONF_GPMC_NCS5                 0x00B8
+#define CONTROL_PADCONF_GPMC_NCS6                 0x00BA
+#define CONTROL_PADCONF_GPMC_NCS7                 0x00BC
+#define CONTROL_PADCONF_GPMC_NOE                  0x00C2
+#define CONTROL_PADCONF_GPMC_NWE                  0x00C4
+#define CONTROL_PADCONF_GPMC_NWP                  0x00CA
+#define CONTROL_PADCONF_GPMC_WAIT0                0x00CC
+#define CONTROL_PADCONF_GPMC_WAIT1                0x00CE
+#define CONTROL_PADCONF_GPMC_WAIT2                0x00D0
+#define CONTROL_PADCONF_GPMC_WAIT3                0x00D2
+#define CONTROL_PADCONF_HDQ_SIO                   0x01C6
+#define CONTROL_PADCONF_HSUSB0_CLK                0x01A2
+#define CONTROL_PADCONF_HSUSB0_DATA0              0x01AA
+#define CONTROL_PADCONF_HSUSB0_DATA1              0x01AC
+#define CONTROL_PADCONF_HSUSB0_DATA2              0x01AE
+#define CONTROL_PADCONF_HSUSB0_DATA3              0x01B0
+#define CONTROL_PADCONF_HSUSB0_DATA4              0x01B2
+#define CONTROL_PADCONF_HSUSB0_DATA5              0x01B4
+#define CONTROL_PADCONF_HSUSB0_DATA6              0x01B6
+#define CONTROL_PADCONF_HSUSB0_DATA7              0x01B8
+#define CONTROL_PADCONF_HSUSB0_DIR                0x01A6
+#define CONTROL_PADCONF_HSUSB0_NXT                0x01A8
+#define CONTROL_PADCONF_HSUSB0_STP                0x01A4
+#define CONTROL_PADCONF_I2C1_SCL                  0x01BA
+#define CONTROL_PADCONF_I2C1_SDA                  0x01BC
+#define CONTROL_PADCONF_I2C2_SCL                  0x01BE
+#define CONTROL_PADCONF_I2C2_SDA                  0x01C0
+#define CONTROL_PADCONF_I2C3_SCL                  0x01C2
+#define CONTROL_PADCONF_I2C3_SDA                  0x01C4
+#define CONTROL_PADCONF_I2C4_SCL                  0x0A00
+#define CONTROL_PADCONF_I2C4_SDA                  0x0A02
+#define CONTROL_PADCONF_JTAG_EMU0                 0x0A24
+#define CONTROL_PADCONF_JTAG_EMU1                 0x0A26
+#define CONTROL_PADCONF_JTAG_nTRST                0x0A1C
+#define CONTROL_PADCONF_JTAG_TCK                  0x0A1E
+#define CONTROL_PADCONF_JTAG_TDI                  0x0A22
+#define CONTROL_PADCONF_JTAG_TDO                  0x0A50
+#define CONTROL_PADCONF_JTAG_TMS                  0x0A20
+#define CONTROL_PADCONF_MCBSP_CLKS                0x0194
+#define CONTROL_PADCONF_MCBSP1_CLKR               0x018C
+#define CONTROL_PADCONF_MCBSP1_CLKX               0x0198
+#define CONTROL_PADCONF_MCBSP1_DR                 0x0192
+#define CONTROL_PADCONF_MCBSP1_DX                 0x0190
+#define CONTROL_PADCONF_MCBSP1_FSR                0x018E
+#define CONTROL_PADCONF_MCBSP1_FSX                0x0196
+#define CONTROL_PADCONF_MCBSP2_CLKX               0x013E
+#define CONTROL_PADCONF_MCBSP2_DR                 0x0140
+#define CONTROL_PADCONF_MCBSP2_DX                 0x0142
+#define CONTROL_PADCONF_MCBSP2_FSX                0x013C
+#define CONTROL_PADCONF_MCBSP3_CLKX               0x0170
+#define CONTROL_PADCONF_MCBSP3_DR                 0x016E
+#define CONTROL_PADCONF_MCBSP3_DX                 0x016C
+#define CONTROL_PADCONF_MCBSP3_FSX                0x0172
+#define CONTROL_PADCONF_MCBSP4_CLKX               0x0184
+#define CONTROL_PADCONF_MCBSP4_DR                 0x0186
+#define CONTROL_PADCONF_MCBSP4_DX                 0x0188
+#define CONTROL_PADCONF_MCBSP4_FSX                0x018A
+#define CONTROL_PADCONF_MCSPI1_CLK                0x01C8
+#define CONTROL_PADCONF_MCSPI1_CS0                0x01CE
+#define CONTROL_PADCONF_MCSPI1_CS1                0x01D0
+#define CONTROL_PADCONF_MCSPI1_CS2                0x01D2
+#define CONTROL_PADCONF_MCSPI1_CS3                0x01D4
+#define CONTROL_PADCONF_MCSPI1_SIMO               0x01CA
+#define CONTROL_PADCONF_MCSPI1_SOMI               0x01CC
+#define CONTROL_PADCONF_MCSPI2_CLK                0x01D6
+#define CONTROL_PADCONF_MCSPI2_CS0                0x01DC
+#define CONTROL_PADCONF_MCSPI2_CS1                0x01DE
+#define CONTROL_PADCONF_MCSPI2_SIMO               0x01D8
+#define CONTROL_PADCONF_MCSPI2_SOMI               0x01DA
+#define CONTROL_PADCONF_MMC1_CLK                  0x0144
+#define CONTROL_PADCONF_MMC1_CMD                  0x0146
+#define CONTROL_PADCONF_MMC1_DAT0                 0x0148
+#define CONTROL_PADCONF_MMC1_DAT1                 0x014A
+#define CONTROL_PADCONF_MMC1_DAT2                 0x014C
+#define CONTROL_PADCONF_MMC1_DAT3                 0x014E
+#define CONTROL_PADCONF_MMC1_DAT4                 0x0150
+#define CONTROL_PADCONF_MMC1_DAT5                 0x0152
+#define CONTROL_PADCONF_MMC1_DAT6                 0x0154
+#define CONTROL_PADCONF_MMC1_DAT7                 0x0156
+#define CONTROL_PADCONF_MMC2_CLK                  0x0158
+#define CONTROL_PADCONF_MMC2_CMD                  0x015A
+#define CONTROL_PADCONF_MMC2_DAT0                 0x015C
+#define CONTROL_PADCONF_MMC2_DAT1                 0x015E
+#define CONTROL_PADCONF_MMC2_DAT2                 0x0160
+#define CONTROL_PADCONF_MMC2_DAT3                 0x0162
+#define CONTROL_PADCONF_MMC2_DAT4                 0x0164
+#define CONTROL_PADCONF_MMC2_DAT5                 0x0166
+#define CONTROL_PADCONF_MMC2_DAT6                 0x0168
+#define CONTROL_PADCONF_MMC2_DAT7                 0x016A
+#define CONTROL_PADCONF_SDRC_CKE0                 0x0262
+#define CONTROL_PADCONF_SDRC_CKE1                 0x0264
+#define CONTROL_PADCONF_SDRC_CLK                  0x0070
+#define CONTROL_PADCONF_SDRC_D0                   0x0030
+#define CONTROL_PADCONF_SDRC_D1                   0x0032
+#define CONTROL_PADCONF_SDRC_D2                   0x0034
+#define CONTROL_PADCONF_SDRC_D3                   0x0036
+#define CONTROL_PADCONF_SDRC_D4                   0x0038
+#define CONTROL_PADCONF_SDRC_D5                   0x003A
+#define CONTROL_PADCONF_SDRC_D6                   0x003C
+#define CONTROL_PADCONF_SDRC_D7                   0x003E
+#define CONTROL_PADCONF_SDRC_D8                   0x0040
+#define CONTROL_PADCONF_SDRC_D9                   0x0042
+#define CONTROL_PADCONF_SDRC_D10                  0x0044
+#define CONTROL_PADCONF_SDRC_D11                  0x0046
+#define CONTROL_PADCONF_SDRC_D12                  0x0048
+#define CONTROL_PADCONF_SDRC_D13                  0x004A
+#define CONTROL_PADCONF_SDRC_D14                  0x004C
+#define CONTROL_PADCONF_SDRC_D15                  0x004E
+#define CONTROL_PADCONF_SDRC_D16                  0x0050
+#define CONTROL_PADCONF_SDRC_D17                  0x0052
+#define CONTROL_PADCONF_SDRC_D18                  0x0054
+#define CONTROL_PADCONF_SDRC_D19                  0x0056
+#define CONTROL_PADCONF_SDRC_D20                  0x0058
+#define CONTROL_PADCONF_SDRC_D21                  0x005A
+#define CONTROL_PADCONF_SDRC_D22                  0x005C
+#define CONTROL_PADCONF_SDRC_D23                  0x005E
+#define CONTROL_PADCONF_SDRC_D24                  0x0060
+#define CONTROL_PADCONF_SDRC_D25                  0x0062
+#define CONTROL_PADCONF_SDRC_D26                  0x0064
+#define CONTROL_PADCONF_SDRC_D27                  0x0066
+#define CONTROL_PADCONF_SDRC_D28                  0x0068
+#define CONTROL_PADCONF_SDRC_D29                  0x006A
+#define CONTROL_PADCONF_SDRC_D30                  0x006C
+#define CONTROL_PADCONF_SDRC_D31                  0x006E
+#define CONTROL_PADCONF_SDRC_DQS0                 0x0072
+#define CONTROL_PADCONF_SDRC_DQS1                 0x0074
+#define CONTROL_PADCONF_SDRC_DQS2                 0x0076
+#define CONTROL_PADCONF_SDRC_DQS3                 0x0078
+#define CONTROL_PADCONF_SYS_32K                   0x0A04
+#define CONTROL_PADCONF_SYS_BOOT0                 0x0A0A
+#define CONTROL_PADCONF_SYS_BOOT1                 0x0A0C
+#define CONTROL_PADCONF_SYS_BOOT2                 0x0A0E
+#define CONTROL_PADCONF_SYS_BOOT3                 0x0A10
+#define CONTROL_PADCONF_SYS_BOOT4                 0x0A12
+#define CONTROL_PADCONF_SYS_BOOT5                 0x0A14
+#define CONTROL_PADCONF_SYS_BOOT6                 0x0A16
+#define CONTROL_PADCONF_SYS_CLKOUT1               0x0A1A
+#define CONTROL_PADCONF_SYS_CLKOUT2               0x01E2
+#define CONTROL_PADCONF_SYS_CLKREQ                0x0A06
+#define CONTROL_PADCONF_SYS_NIRQ                  0x01E0
+#define CONTROL_PADCONF_SYS_NRESWARM              0x0A08
+#define CONTROL_PADCONF_SYS_OFF_MODE              0x0A18
+#define CONTROL_PADCONF_UART1_CTS                 0x0180
+#define CONTROL_PADCONF_UART1_RTS                 0x017E
+#define CONTROL_PADCONF_UART1_RX                  0x0182
+#define CONTROL_PADCONF_UART1_TX                  0x017C
+#define CONTROL_PADCONF_UART2_CTS                 0x0174
+#define CONTROL_PADCONF_UART2_RTS                 0x0176
+#define CONTROL_PADCONF_UART2_RX                  0x017A
+#define CONTROL_PADCONF_UART2_TX                  0x0178
+#define CONTROL_PADCONF_UART3_CTS_RCTX            0x019A
+#define CONTROL_PADCONF_UART3_RTS_SD              0x019C
+#define CONTROL_PADCONF_UART3_RX_IRRX             0x019E
+#define CONTROL_PADCONF_UART3_TX_IRTX             0x01A0
+
+#define MUX_VAL(OFFSET,VALUE)\
+    writew((VALUE), OMAP34XX_CTRL_BASE + (OFFSET));
+
+
+#define MUX_ORION() \
+MUX_VAL(CONTROL_PADCONF_GPIO_112, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPIO_113, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPIO_114, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPIO_115, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_D0, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_D1, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_D2, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_D3, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_D4, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_D5, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_D6, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_D7, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_D8, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_D9, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_D10, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_D11, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_FLD, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_HS, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_PCLK, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_STROBE, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_VS, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_WEN, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_XCLKA, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_CAM_XCLKB, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_DSS_ACBIAS, (IDIS | PD | M0 )) /* dss_acbias */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA0, (IDIS | PD | M0 )) /* dss_data0 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA1, (IDIS | PD | M0 )) /* dss_data1 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA2, (IDIS | PD | M0 )) /* dss_data2 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA3, (IDIS | PD | M0 )) /* dss_data3 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA4, (IDIS | PD | M0 )) /* dss_data4 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA5, (IDIS | PD | M0 )) /* dss_data5 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA6, (IDIS | PD | M0 )) /* dss_data6 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA7, (IDIS | PD | M0 )) /* dss_data7 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA8, (IDIS | PD | M0 )) /* dss_data8 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA9, (IDIS | PD | M0 )) /* dss_data9 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA10, (IDIS | PD | M0 )) /* dss_data10 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA11, (IDIS | PD | M0 )) /* dss_data11 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA12, (IDIS | PD | M0 )) /* dss_data12 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA13, (IDIS | PD | M0 )) /* dss_data13 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA14, (IDIS | PD | M0 )) /* dss_data14 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA15, (IDIS | PD | M0 )) /* dss_data15 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA16, (IDIS | PD | M0 )) /* dss_data16 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA17, (IDIS | PD | M0 )) /* dss_data17 */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA18, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA19, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA20, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA21, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA22, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_DSS_DATA23, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_DSS_HSYNC, (IDIS | PU | M0 )) /* dss_hsync */\
+MUX_VAL(CONTROL_PADCONF_DSS_PCLK, (IDIS | PD | M0 )) /* dss_pclk */\
+MUX_VAL(CONTROL_PADCONF_DSS_VSYNC, (IDIS | PU | M0 )) /* dss_vsync */\
+MUX_VAL(CONTROL_PADCONF_ETK_CLK_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_12 */\
+MUX_VAL(CONTROL_PADCONF_ETK_CTL_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_13 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D0_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_14 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D1_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_15 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D2_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_16 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D3_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_17 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D4_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_18 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D5_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_19 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D6_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_20 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D7_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_21 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D8_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_22 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D9_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_23 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D10_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_24 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D11_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_25 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D12_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_26 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D13_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_27 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D14_ES2, (IEN | PD | SB_HIZ | SB_PD | M4 )) /* gpio_28 */\
+MUX_VAL(CONTROL_PADCONF_ETK_D15_ES2, (IDIS | PD | M4 )) /* gpio_29 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_A1, (IDIS | PI | M0 )) /* gpmc_a1 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_A2, (IDIS | PI | M0 )) /* gpmc_a2 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_A3, (IDIS | PI | M0 )) /* gpmc_a3 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_A4, (IDIS | PI | M0 )) /* gpmc_a4 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_A5, (IDIS | PI | M0 )) /* gpmc_a5 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_A6, (IDIS | PI | M0 )) /* gpmc_a6 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_A7, (IDIS | PI | M0 )) /* gpmc_a7 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_A8, (IDIS | PI | M0 )) /* gpmc_a8 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_A9, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPMC_A10, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPMC_CLK, (IDIS | PI | M0 )) /* gpmc_clk */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D0, (IEN | PI | M0 )) /* gpmc_d0 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D1, (IEN | PI | M0 )) /* gpmc_d1 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D2, (IEN | PI | M0 )) /* gpmc_d2 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D3, (IEN | PI | M0 )) /* gpmc_d3 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D4, (IEN | PI | M0 )) /* gpmc_d4 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D5, (IEN | PI | M0 )) /* gpmc_d5 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D6, (IEN | PI | M0 )) /* gpmc_d6 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D7, (IEN | PI | M0 )) /* gpmc_d7 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D8, (IEN | PI | M0 )) /* gpmc_d8 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D9, (IEN | PI | M0 )) /* gpmc_d9 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D10, (IEN | PI | M0 )) /* gpmc_d10 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D11, (IEN | PI | M0 )) /* gpmc_d11 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D12, (IEN | PI | M0 )) /* gpmc_d12 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D13, (IEN | PI | M0 )) /* gpmc_d13 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D14, (IEN | PI | M0 )) /* gpmc_d14 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_D15, (IEN | PI | M0 )) /* gpmc_d15 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NADV_ALE, (IDIS | PI | M0 )) /* gpmc_nadv_ale */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NBE0_CLE, (IDIS | PI | M0 )) /* gpmc_nbe0_cle */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NBE1, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NCS0, (IDIS | PU | M0 )) /* gpmc_ncs0 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NCS1, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NCS2, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NCS3, (IDIS | PU | M0 )) /* gpmc_ncs3 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NCS4, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NCS5, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NCS6, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NCS7, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NOE, (IDIS | PI | M0 )) /* gpmc_noe */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NWE, (IDIS | PI | M0 )) /* gpmc_nwe */\
+MUX_VAL(CONTROL_PADCONF_GPMC_NWP, (IDIS | PU | M0 )) /* gpmc_nwp */\
+MUX_VAL(CONTROL_PADCONF_GPMC_WAIT0, (IEN | PU | M0 )) /* gpmc_wait0 */\
+MUX_VAL(CONTROL_PADCONF_GPMC_WAIT1, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPMC_WAIT2, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_GPMC_WAIT3, (IEN | PU | M0 )) /* gpmc_wait3 */\
+MUX_VAL(CONTROL_PADCONF_HDQ_SIO, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_HSUSB0_CLK, (IEN | PD | M0 )) /* hsusb0_clk */\
+MUX_VAL(CONTROL_PADCONF_HSUSB0_DATA0, (IEN | PD | M0 )) /* hsusb0_data0 */\
+MUX_VAL(CONTROL_PADCONF_HSUSB0_DATA1, (IEN | PD | M0 )) /* hsusb0_data1 */\
+MUX_VAL(CONTROL_PADCONF_HSUSB0_DATA2, (IEN | PD | M0 )) /* hsusb0_data2 */\
+MUX_VAL(CONTROL_PADCONF_HSUSB0_DATA3, (IEN | PD | M0 )) /* hsusb0_data3 */\
+MUX_VAL(CONTROL_PADCONF_HSUSB0_DATA4, (IEN | PD | M0 )) /* hsusb0_data4 */\
+MUX_VAL(CONTROL_PADCONF_HSUSB0_DATA5, (IEN | PD | M0 )) /* hsusb0_data5 */\
+MUX_VAL(CONTROL_PADCONF_HSUSB0_DATA6, (IEN | PD | M0 )) /* hsusb0_data6 */\
+MUX_VAL(CONTROL_PADCONF_HSUSB0_DATA7, (IEN | PD | M0 )) /* hsusb0_data7 */\
+MUX_VAL(CONTROL_PADCONF_HSUSB0_DIR, (IEN | PD | M0 )) /* hsusb0_dir */\
+MUX_VAL(CONTROL_PADCONF_HSUSB0_NXT, (IEN | PD | M0 )) /* hsusb0_nxt */\
+MUX_VAL(CONTROL_PADCONF_HSUSB0_STP, (IDIS | PU | M0 )) /* hsusb0_stp */\
+MUX_VAL(CONTROL_PADCONF_I2C1_SCL, (IEN | PI | M0 )) /* i2c1_scl */\
+MUX_VAL(CONTROL_PADCONF_I2C1_SDA, (IEN | PI | M0 )) /* i2c1_sda */\
+MUX_VAL(CONTROL_PADCONF_I2C2_SCL, (IEN | PI | M0 )) /* i2c2_scl */\
+MUX_VAL(CONTROL_PADCONF_I2C2_SDA, (IEN | PI | M0 )) /* i2c2_sda */\
+MUX_VAL(CONTROL_PADCONF_I2C3_SCL, (IEN | PI | M0 )) /* i2c3_scl */\
+MUX_VAL(CONTROL_PADCONF_I2C3_SDA, (IEN | PI | M0 )) /* i2c3_sda */\
+MUX_VAL(CONTROL_PADCONF_I2C4_SCL, (IEN | PI | M0 )) /* i2c4_scl */\
+MUX_VAL(CONTROL_PADCONF_I2C4_SDA, (IEN | PI | M0 )) /* i2c4_sda */\
+MUX_VAL(CONTROL_PADCONF_JTAG_EMU0, (IEN | PU | M0 )) /* jtag_emu0 */\
+MUX_VAL(CONTROL_PADCONF_JTAG_EMU1, (IEN | PU | M0 )) /* jtag_emu1 */\
+MUX_VAL(CONTROL_PADCONF_JTAG_nTRST, (IEN | PD | M0 )) /* jtag_ntrst */\
+MUX_VAL(CONTROL_PADCONF_JTAG_TCK, (IEN | PD | M0 )) /* jtag_tck */\
+MUX_VAL(CONTROL_PADCONF_JTAG_TDI, (IEN | PU | M0 )) /* jtag_tdi */\
+MUX_VAL(CONTROL_PADCONF_JTAG_TDO, (IDIS | PI | M0 )) /* jtag_tdo */\
+MUX_VAL(CONTROL_PADCONF_JTAG_TMS, (IEN | PU | M0 )) /* jtag_tms_tmsc */\
+MUX_VAL(CONTROL_PADCONF_MCBSP_CLKS, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MCBSP1_CLKR, (IEN | PI | M0 )) /* mcbsp1_clkr */\
+MUX_VAL(CONTROL_PADCONF_MCBSP1_CLKX, (IEN | PD | M0 )) /* mcbsp1_clkx */\
+MUX_VAL(CONTROL_PADCONF_MCBSP1_DR, (IEN | PD | M0 )) /* mcbsp1_dr */\
+MUX_VAL(CONTROL_PADCONF_MCBSP1_DX, (IDIS | PD | M0 )) /* mcbsp1_dx */\
+MUX_VAL(CONTROL_PADCONF_MCBSP1_FSR, (IEN | PI | M0 )) /* mcbsp1_fsr */\
+MUX_VAL(CONTROL_PADCONF_MCBSP1_FSX, (IEN | PD | M0 )) /* mcbsp1_fsx */\
+MUX_VAL(CONTROL_PADCONF_MCBSP2_CLKX, (IEN | PD | M0 )) /* mcbsp2_clkx */\
+MUX_VAL(CONTROL_PADCONF_MCBSP2_DR, (IEN | PD | M0 )) /* mcbsp2_dr */\
+MUX_VAL(CONTROL_PADCONF_MCBSP2_DX, (IDIS | PD | M0 )) /* mcbsp2_dx */\
+MUX_VAL(CONTROL_PADCONF_MCBSP2_FSX, (IEN | PD | M0 )) /* mcbsp2_fsx */\
+MUX_VAL(CONTROL_PADCONF_MCBSP3_CLKX, (IDIS | PU | M1 )) /* uart2_tx */\
+MUX_VAL(CONTROL_PADCONF_MCBSP3_DR, (IEN | PU | M4 )) /* gpio_141 */\
+MUX_VAL(CONTROL_PADCONF_MCBSP3_DX, (IEN | PU | M4 )) /* gpio_140 */\
+MUX_VAL(CONTROL_PADCONF_MCBSP3_FSX, (IEN | PU | M1 )) /* uart2_rx */\
+MUX_VAL(CONTROL_PADCONF_MCBSP4_CLKX, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MCBSP4_DR, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MCBSP4_DX, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MCBSP4_FSX, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MCSPI1_CLK, (IDIS | PD | M0 )) /* mcspi1_clk */\
+MUX_VAL(CONTROL_PADCONF_MCSPI1_CS0, (IDIS | PU | M0 )) /* mcspi1_cs0 */\
+MUX_VAL(CONTROL_PADCONF_MCSPI1_CS1, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MCSPI1_CS2, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MCSPI1_CS3, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MCSPI1_SIMO, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MCSPI1_SOMI, (IEN | PD | M0 )) /* mcspi1_somi */\
+MUX_VAL(CONTROL_PADCONF_MCSPI2_CLK, (IEN | PD | M0 )) /* mcspi2_clk */\
+MUX_VAL(CONTROL_PADCONF_MCSPI2_CS0, (IEN | PU | M0 )) /* mcspi2_cs0 */\
+MUX_VAL(CONTROL_PADCONF_MCSPI2_CS1, (IEN | PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MCSPI2_SIMO, (IEN | PD | M0 )) /* mcspi2_simo */\
+MUX_VAL(CONTROL_PADCONF_MCSPI2_SOMI, (IEN | PD | M0 )) /* mcspi2_somi */\
+MUX_VAL(CONTROL_PADCONF_MMC1_CLK, (IDIS | PD | M0 )) /* mmc1_clk */\
+MUX_VAL(CONTROL_PADCONF_MMC1_CMD, (IEN | PI | M0 )) /* mmc1_cmd */\
+MUX_VAL(CONTROL_PADCONF_MMC1_DAT0, (IEN | PI | M0 )) /* mmc1_dat0 */\
+MUX_VAL(CONTROL_PADCONF_MMC1_DAT1, (IEN | PI | M0 )) /* mmc1_dat1 */\
+MUX_VAL(CONTROL_PADCONF_MMC1_DAT2, (IEN | PI | M0 )) /* mmc1_dat2 */\
+MUX_VAL(CONTROL_PADCONF_MMC1_DAT3, (IEN | PI | M0 )) /* mmc1_dat3 */\
+MUX_VAL(CONTROL_PADCONF_MMC1_DAT4, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MMC1_DAT5, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MMC1_DAT6, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MMC1_DAT7, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MMC2_CLK, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MMC2_CMD, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MMC2_DAT0, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MMC2_DAT1, (IEN | PU | SB_HIZ | M4 )) /* gpio_133 */\
+MUX_VAL(CONTROL_PADCONF_MMC2_DAT2, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MMC2_DAT3, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MMC2_DAT4, (IEN | PU | M4 )) /* gpio_136 */\
+MUX_VAL(CONTROL_PADCONF_MMC2_DAT5, (IEN | PU | M4 )) /* gpio_137 */\
+MUX_VAL(CONTROL_PADCONF_MMC2_DAT6, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_MMC2_DAT7, (IEN | PU | SB_HIZ | M4 )) /* gpio_139 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_CKE0, (IDIS | PI | M0 )) /* sdrc_cke0 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_CKE1, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_SDRC_CLK, (IEN | PI | M0 )) /* sdrc_clk */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D0, (IEN | PI | M0 )) /* sdrc_d0 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D1, (IEN | PI | M0 )) /* sdrc_d1 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D2, (IEN | PI | M0 )) /* sdrc_d2 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D3, (IEN | PI | M0 )) /* sdrc_d3 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D4, (IEN | PI | M0 )) /* sdrc_d4 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D5, (IEN | PI | M0 )) /* sdrc_d5 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D6, (IEN | PI | M0 )) /* sdrc_d6 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D7, (IEN | PI | M0 )) /* sdrc_d7 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D8, (IEN | PI | M0 )) /* sdrc_d8 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D9, (IEN | PI | M0 )) /* sdrc_d9 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D10, (IEN | PI | M0 )) /* sdrc_d10 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D11, (IEN | PI | M0 )) /* sdrc_d11 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D12, (IEN | PI | M0 )) /* sdrc_d12 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D13, (IEN | PI | M0 )) /* sdrc_d13 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D14, (IEN | PI | M0 )) /* sdrc_d14 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D15, (IEN | PI | M0 )) /* sdrc_d15 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D16, (IEN | PI | M0 )) /* sdrc_d16 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D17, (IEN | PI | M0 )) /* sdrc_d17 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D18, (IEN | PI | M0 )) /* sdrc_d18 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D19, (IEN | PI | M0 )) /* sdrc_d19 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D20, (IEN | PI | M0 )) /* sdrc_d20 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D21, (IEN | PI | M0 )) /* sdrc_d21 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D22, (IEN | PI | M0 )) /* sdrc_d22 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D23, (IEN | PI | M0 )) /* sdrc_d23 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D24, (IEN | PI | M0 )) /* sdrc_d24 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D25, (IEN | PI | M0 )) /* sdrc_d25 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D26, (IEN | PI | M0 )) /* sdrc_d26 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D27, (IEN | PI | M0 )) /* sdrc_d27 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D28, (IEN | PI | M0 )) /* sdrc_d28 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D29, (IEN | PI | M0 )) /* sdrc_d29 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D30, (IEN | PI | M0 )) /* sdrc_d30 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_D31, (IEN | PI | M0 )) /* sdrc_d31 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_DQS0, (IEN | PI | M0 )) /* sdrc_dqs0 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_DQS1, (IEN | PI | M0 )) /* sdrc_dqs1 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_DQS2, (IEN | PI | M0 )) /* sdrc_dqs2 */\
+MUX_VAL(CONTROL_PADCONF_SDRC_DQS3, (IEN | PI | M0 )) /* sdrc_dqs3 */\
+MUX_VAL(CONTROL_PADCONF_SYS_32K, (IEN | PI | M0 )) /* sys_32k */\
+MUX_VAL(CONTROL_PADCONF_SYS_BOOT0, (IEN | PI | M0 )) /* sys_boot0 */\
+MUX_VAL(CONTROL_PADCONF_SYS_BOOT1, (IEN | PI | M0 )) /* sys_boot1 */\
+MUX_VAL(CONTROL_PADCONF_SYS_BOOT2, (IEN | PI | M0 )) /* sys_boot2 */\
+MUX_VAL(CONTROL_PADCONF_SYS_BOOT3, (IEN | PI | M0 )) /* sys_boot3 */\
+MUX_VAL(CONTROL_PADCONF_SYS_BOOT4, (IEN | PI | M0 )) /* sys_boot4 */\
+MUX_VAL(CONTROL_PADCONF_SYS_BOOT5, (IEN | PI | M0 )) /* sys_boot5 */\
+MUX_VAL(CONTROL_PADCONF_SYS_BOOT6, (IEN | PI | M0 )) /* sys_boot6 */\
+MUX_VAL(CONTROL_PADCONF_SYS_CLKOUT1, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_SYS_CLKOUT2, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_SYS_CLKREQ, (IEN | PI | M0 )) /* sys_clkreq */\
+MUX_VAL(CONTROL_PADCONF_SYS_NIRQ, (IEN | PU | M0 )) /* sys_nirq */\
+MUX_VAL(CONTROL_PADCONF_SYS_NRESWARM, (IEN | PU | M0 )) /* sys_nreswarm */\
+MUX_VAL(CONTROL_PADCONF_SYS_OFF_MODE, (IDIS | PD | M0 )) /* sys_off_mode */\
+MUX_VAL(CONTROL_PADCONF_UART1_CTS, (IEN | PU | M0 )) /* uart1_cts */\
+MUX_VAL(CONTROL_PADCONF_UART1_RTS, (IDIS | PU | M0 )) /* uart1_rts */\
+MUX_VAL(CONTROL_PADCONF_UART1_RX, (IEN | PU | M0 )) /* uart1_rx */\
+MUX_VAL(CONTROL_PADCONF_UART1_TX, (IDIS | PU | M0 )) /* uart1_tx */\
+MUX_VAL(CONTROL_PADCONF_UART2_CTS, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_UART2_RTS, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_UART2_RX, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_UART2_TX, (IEN | PD | SB_HIZ | SB_PD | M7 )) /* safe_mode */\
+MUX_VAL(CONTROL_PADCONF_UART3_CTS_RCTX, (IEN | PU | M0 )) /* uart3_cts_rctx */\
+MUX_VAL(CONTROL_PADCONF_UART3_RTS_SD, (IDIS | PU | M0 )) /* uart3_rts_sd */\
+MUX_VAL(CONTROL_PADCONF_UART3_RX_IRRX, (IEN | PU | M0 )) /* uart3_rx_irrx */\
+MUX_VAL(CONTROL_PADCONF_UART3_TX_IRTX, (IDIS | PU | M0 )) /* uart3_tx_irtx */
+
+#if 0
 /*
  * IEN  - Input Enable
  * IDIS - Input Disable
@@ -59,7 +631,7 @@ static void setup_net_chip(void);
  * M0   - Mode 0
  * The commented string gives the final mux configuration for that pin
  */
-#define MUX_EVM() \
+#define MUX_ORION() \
  /*SDRC*/\
 	MUX_VAL(CP(SDRC_D0),		(IEN  | PTD | DIS | M0)) /*SDRC_D0*/\
 	MUX_VAL(CP(SDRC_D1),		(IEN  | PTD | DIS | M0)) /*SDRC_D1*/\
@@ -403,5 +975,7 @@ static void setup_net_chip(void);
 	MUX_VAL(CP(D2D_SBUSFLAG),	(IEN  | PTD | DIS | M0)) /*d2d_sbusflag*/\
 	MUX_VAL(CP(SDRC_CKE0),		(IDIS | PTU | EN  | M0)) /*sdrc_cke0*/\
 	MUX_VAL(CP(SDRC_CKE1),		(IDIS | PTD | DIS | M7)) /*sdrc_cke1*/\
+
+#endif
 
 #endif

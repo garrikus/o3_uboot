@@ -1,6 +1,6 @@
 /*
  * Navis
- * Author : Igor S.K. ---
+ * Author : Igor S.K.
  *
  * Derived from OMAP3530 EVM code by
  *	Manikandan Pillai <mani.pillai@ti.com>
@@ -30,7 +30,7 @@
 #include <netdev.h>
 #include <asm/io.h>
 #include <asm/arch/mem.h>
-#include <asm/arch/mux.h>
+/*#include <asm/arch/mux.h>*/
 #include <asm/arch/sys_proto.h>
 #include <i2c.h>
 #include <asm/mach-types.h>
@@ -108,7 +108,7 @@ int misc_init_r(void)
  */
 void set_muxconf_regs(void)
 {
-	MUX_EVM();
+	MUX_ORION();
 }
 
 /*
