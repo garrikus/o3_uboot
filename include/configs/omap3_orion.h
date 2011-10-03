@@ -206,7 +206,7 @@
 	"console=ttyO2,115200n8\0" \
 	"mmcargs=setenv bootargs console=${console} " \
 		"root=/dev/mmcblk0p2 rw " \
-		"rootfstype=ext3 rootwait\0" \
+		"rootfstype=ext2 rootwait\0" \
 	"nandargs=setenv bootargs console=${console} " \
 		"root=/dev/mtdblock4 rw " \
 		"rootfstype=jffs2\0" \
