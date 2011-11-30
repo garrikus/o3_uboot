@@ -369,4 +369,8 @@ extern unsigned int boot_flash_type;
 #define CONFIG_BOOTP_HOSTNAME		0x00000004
 #define CONFIG_BOOTP_BOOTPATH		0x00000010
 
+/*----------------------------------------------------------------------------
+ *  Ethernet from SMSC9118 family
+ *----------------------------------------------------------------------------
+ */
 #endif /* __CONFIG_H */
