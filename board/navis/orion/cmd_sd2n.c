@@ -32,7 +32,6 @@ int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
     char *  fname_ptr;
     long    addr,count,filesize,wrsize; 
     size_t  length;
-    int     ecc_type;
 
     block_dev_desc_t *dev_desc=NULL;
     nand_info_t *nand;
@@ -67,11 +66,6 @@ int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	printf ("what? do you want (mlo,uboot,uImage,rootfs)\n");
 	return 1;
     }
-
-    if (what_id < 2)
-	ecc_type = 2;
-    else
-	ecc_type = 1;
 
     if (argc > 2 && strcmp (argv[2], "force") == 0)
     	force_flag = 1;
@@ -154,7 +148,6 @@ int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
     {
 	/* Don't do flash programming unless forced */
 	length = (size_t)wrsize;
-	omap_nand_switch_ecc(NAND_ECC_HW, ecc_type);
 
 	printf( "Will now write nand: offs 0x%x, size 0x%x\n", nand_parts[what_id].offset, length );
 	if (nand_write_skip_bad(nand, (loff_t)nand_parts[what_id].offset,
