@@ -92,9 +92,8 @@
 /*
  * select serial console configuration
  */
-#define CONFIG_CONS_INDEX		1
-#define CONFIG_SYS_NS16550_COM1		OMAP34XX_UART3
-#define CONFIG_SERIAL1			3	/* UART3 on Orion board  */
+#define CONFIG_CONS_INDEX		3
+#define CONFIG_SYS_NS16550_COM3		OMAP34XX_UART3
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
