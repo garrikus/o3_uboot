@@ -431,3 +431,8 @@ int i2c_set_bus_num(unsigned int bus)
 
 	return 0;
 }
+
+unsigned int i2c_get_bus_num(voif)
+{
+    return current_bus;
+}
