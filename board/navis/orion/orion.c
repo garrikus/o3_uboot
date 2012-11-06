@@ -108,7 +108,7 @@ int misc_init_r(void)
  */
 void set_muxconf_regs(void)
 {
-	MUX_ORION();
+	/*MUX_ORION();*/
 }
 
 /*
