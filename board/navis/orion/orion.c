@@ -27,6 +27,7 @@
  * MA 02111-1307 USA
  */
 #include <common.h>
+#include <twl4030.h>
 #include <netdev.h>
 #include <asm/io.h>
 #include <asm/arch/mem.h>
@@ -80,14 +81,39 @@ int board_init(void)
 	return 0;
 }
 
+
+static void vaux4_on()
+{
+
+    unsigned char byte;
+
+    printf("VAUX4 Init ...");
+    /* set VAUX4 to 2.5V */
+    byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+            TWL4030_PM_RECEIVER_VAUX4_DEV_GRP);
+
+    byte = TWL4030_PM_RECEIVER_VAUX4_VSEL_25;
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+            TWL4030_PM_RECEIVER_VAUX4_DEDICATED);
+    printf(" done.\n");
+
+}
+
 /*
  * Routine: misc_init_r
  * Description: Init ethernet (done here so udelay works)
  */
 int misc_init_r(void)
 {
-
 #ifdef CONFIG_DRIVER_OMAP34XX_I2C
+    /*
+     * We have to enable this VAUX4 LDO since there's a buggy chip
+     * in i2c-2 on this board that needs this power.
+     * Otherwise it occupies entire i2c-2 bus with some
+     * garbage. The culprit is TBFound.
+     */
+    vaux4_on();
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 #endif
 
