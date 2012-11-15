@@ -87,6 +87,8 @@ static void vaux4_on()
 
     unsigned char byte;
 
+    void * pcio1 = (void *)0x48002448;
+
     printf("VAUX4 Init ...");
     /* set VAUX4 to 2.5V */
     byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
@@ -96,6 +98,23 @@ static void vaux4_on()
     byte = TWL4030_PM_RECEIVER_VAUX4_VSEL_25;
     twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
             TWL4030_PM_RECEIVER_VAUX4_DEDICATED);
+
+    /******************************/
+    byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+            TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
+
+    byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+            TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+    /*******************************/
+
+    sr32(pcio1, 27, 1, 0);
+    sr32(pcio1, 26, 1, 1);
+    sr32(pcio1, 25, 1, 1);
+    sr32(pcio1, 24, 1, 0);
+
+
     printf(" done.\n");
 
 }
