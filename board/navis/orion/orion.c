@@ -99,16 +99,6 @@ static void vaux4_on()
     twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
             TWL4030_PM_RECEIVER_VAUX4_DEDICATED);
 
-    /******************************/
-    byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
-    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
-            TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
-
-    byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
-    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
-            TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
-    /*******************************/
-
     sr32(pcio1, 27, 1, 0);
     sr32(pcio1, 26, 1, 1);
     sr32(pcio1, 25, 1, 1);
@@ -119,6 +109,40 @@ static void vaux4_on()
 
 }
 
+extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+static void dsi_tmp_reset_fix()
+{
+    /* Check if we have VAUX3 pwr running */
+
+    u8 byte, val1, val2;
+    int reset_flag = 0;
+
+    twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val1,
+            TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
+    twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val2,
+            TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+
+    byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+            TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
+
+    byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+            TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+
+    if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+            val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
+    {
+
+        printf("No VAUX3 active. Switch ON and reset.\n");
+        do_reset(NULL, 0, 0, NULL);
+
+        printf("Reset error???\n");
+    }
+    else
+        printf("Active VAUX3 found. Go ahead.\n");
+}
+
 /*
  * Routine: misc_init_r
  * Description: Init ethernet (done here so udelay works)
@@ -126,6 +150,7 @@ static void vaux4_on()
 int misc_init_r(void)
 {
 #ifdef CONFIG_DRIVER_OMAP34XX_I2C
+    dsi_tmp_reset_fix();
     /*
      * We have to enable this VAUX4 LDO since there's a buggy chip
      * in i2c-2 on this board that needs this power.
