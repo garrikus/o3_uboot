@@ -176,6 +176,7 @@
  * TWL4030
  */
 #define CONFIG_TWL4030_POWER		1
+#define CONFIG_TWL4030_USB		1
 
 /*
  * Board NAND Info.

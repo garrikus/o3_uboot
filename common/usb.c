@@ -766,6 +766,9 @@ struct usb_device *usb_alloc_new_device(void)
  *
  * Returns 0 for success, != 0 for error.
  */
+ 
+//#define CONFIG_LEGACY_USB_INIT_SEQ
+ 
 int usb_new_device(struct usb_device *dev)
 {
 	int addr, err;
@@ -777,6 +780,7 @@ int usb_new_device(struct usb_device *dev)
 	dev->devnum = 0;
 
 #ifdef CONFIG_LEGACY_USB_INIT_SEQ
+
 	/* this is the old and known way of initializing devices, it is
 	 * different than what Windows and Linux are doing. Windows and Linux
 	 * both retrieve 64 bytes while reading the device descriptor
@@ -786,6 +790,22 @@ int usb_new_device(struct usb_device *dev)
 	dev->maxpacketsize = PACKET_SIZE_8;
 	dev->epmaxpacketin[0] = 8;
 	dev->epmaxpacketout[0] = 8;
+
+
+dev->descriptor.bLength = 18;
+dev->descriptor.bDescriptorType = 1;
+dev->descriptor.bcdUSB = 2;
+dev->descriptor.bDeviceClass = 0;
+dev->descriptor.bDeviceSubClass = 0;
+dev->descriptor.bDeviceProtocol = 0;
+dev->descriptor.idVendor = 0x0525;
+dev->descriptor.idProduct = 0xa4a9;
+dev->descriptor.bcdDevice = 21;
+dev->descriptor.iManufacturer = 1;
+dev->descriptor.iProduct = 2;
+dev->descriptor.iSerialNumber = 0;
+dev->descriptor.bNumConfigurations = 1;
+
 
 	err = usb_get_descriptor(dev, USB_DT_DEVICE, 0, &dev->descriptor, 8);
 	if (err < 8) {
@@ -810,6 +830,22 @@ int usb_new_device(struct usb_device *dev)
 	 * only 18 bytes long, this will terminate with a short packet.  But if
 	 * the maxpacket size is 8 or 16 the device may be waiting to transmit
 	 * some more, or keeps on retransmitting the 8 byte header. */
+
+
+dev->descriptor.bLength = 18;
+dev->descriptor.bDescriptorType = 1;
+dev->descriptor.bcdUSB = 2;
+dev->descriptor.bDeviceClass = 0;
+dev->descriptor.bDeviceSubClass = 0;
+dev->descriptor.bDeviceProtocol = 0;
+dev->descriptor.idVendor = 0x0525;
+dev->descriptor.idProduct = 0xa4a9;
+dev->descriptor.bcdDevice = 21;
+dev->descriptor.iManufacturer = 1;
+dev->descriptor.iProduct = 2;
+dev->descriptor.iSerialNumber = 0;
+dev->descriptor.bNumConfigurations = 1;
+
 
 	desc = (struct usb_device_descriptor *)tmpbuf;
 	dev->descriptor.bMaxPacketSize0 = 64;	    /* Start off at 64 bytes  */
