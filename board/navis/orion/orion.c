@@ -313,7 +313,6 @@ i2c_set_bus_num(0);
 ///udelay(50000);
 //musb_platform_init();
 
-
 		if(voltage <= 3200)
 		{
 		    printf("\tRequires charging...\n", voltage);
