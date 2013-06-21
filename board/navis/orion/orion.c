@@ -143,7 +143,7 @@ static void dsi_tmp_reset_fix()
         printf("Active VAUX3 found. Go ahead.\n");
 }
 
-#define I2C_ACCUM_DEBUG
+//#define I2C_ACCUM_DEBUG
 
 #define SHUTDOWN twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P2_SW_EVENTS); \
 		 twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P3_SW_EVENTS); \
