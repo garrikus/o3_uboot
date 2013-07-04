@@ -145,10 +145,14 @@ static void dsi_tmp_reset_fix()
 
 //#define I2C_ACCUM_DEBUG
 
-#define SHUTDOWN twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P2_SW_EVENTS); \
-		 twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P3_SW_EVENTS); \
-		 twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P1_SW_EVENTS);
+static inline void shutdown()
+{
+    i2c_set_bus_num(0);
 
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P2_SW_EVENTS);
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P3_SW_EVENTS);
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P1_SW_EVENTS);
+}
 
 
 static void check_accum()
@@ -204,9 +208,6 @@ static void check_accum()
 		printf("VALUE OF VOLTAGE ACCUM IS %d.%d V\n", voltage/1000, voltage%1000);
 #endif
 
-///udelay(50000);
-//musb_platform_init();
-
 		if(voltage <= 3200)
 		{
 		    printf("\tRequires charging...\n", voltage);
@@ -227,14 +228,13 @@ static void check_accum()
 			
 			if(!error)
 			{
-//			    if((value & (1 << 7)) && (value & (1 << 6)))
 			    if(value & 0xC0)
 			    {
 				error = smb_write (0x09, 0x02, 0xFF);
 #ifdef I2C_ACCUM_DEBUG
 				if(!error)
-				     printf("REG2 was writed\n");
-				else printf("REG2 don't writed... ERROR = %d\n", error);
+				     printf("REG2 was written\n");
+				else printf("REG2 isn't written... ERROR = %d\n", error);
 
 				if(!(error = smb_read(0x09, 0x02, &value)))
 				     printf("Value of register2 is = 0x%02x =\n", value);
@@ -243,8 +243,8 @@ static void check_accum()
 				error = smb_write (0x09, 0x01, 0xAF);
 #ifdef I2C_ACCUM_DEBUG
 				if(!error)
-				     printf("REG1 was writed\n");
-				else printf("REG1 don't writed... ERROR = %d\n", error);
+				     printf("REG1 was written\n");
+				else printf("REG1 isn't written... ERROR = %d\n", error);
 
 				if(!(error = smb_read(0x09, 0x01, &value)))
 				     printf("Value of register1 is = 0x%02x =\n", value);
@@ -253,8 +253,8 @@ static void check_accum()
 				error = smb_write (0x09, 0x00, 0x61);
 #ifdef I2C_ACCUM_DEBUG
 				if(!error)
-				     printf("REG0 was writed\n");
-				else printf("REG0 don't writed... ERROR = %d\n", error);
+				     printf("REG0 was written\n");
+				else printf("REG0 isn't written... ERROR = %d\n", error);
 
 				if(!(error = smb_read(0x09, 0x00, &value)))
 				     printf("Value of register0 is = 0x%02x =\n", value);
@@ -263,9 +263,8 @@ static void check_accum()
 			    }
 			    else
 			    {
-				printf("\nSHUTDOWN!\n");
-				i2c_set_bus_num(0);
-				SHUTDOWN
+                    printf("\nSHUTDOWN!\n");
+                    shutdown();
 			    }
 			}
 			else printf("REG4 test of CHGR FAILED... ERROR = %d\n", error);
