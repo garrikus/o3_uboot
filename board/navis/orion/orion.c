@@ -84,7 +84,6 @@ int board_init(void)
 
 static void vaux4_on()
 {
-
     unsigned char byte;
 
     void * pcio1 = (void *)0x48002448;
@@ -106,7 +105,6 @@ static void vaux4_on()
 
 
     printf(" done.\n");
-
 }
 
 extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
@@ -115,7 +113,6 @@ static void dsi_tmp_reset_fix()
     /* Check if we have VAUX3 pwr running */
 
     u8 byte, val1, val2;
-    int reset_flag = 0;
 
     twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val1,
             TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
@@ -210,7 +207,7 @@ static void check_accum()
 
 		if(voltage <= 3200)
 		{
-		    printf("\tRequires charging...\n", voltage);
+		    printf("\tRequires charging...\n");
 		
 		    if(!i2c_probe (0x09))
 		    {
