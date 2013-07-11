@@ -243,6 +243,7 @@ LIBS += common/libcommon.a
 LIBS += lib/libfdt/libfdt.a
 LIBS += api/libapi.a
 LIBS += post/libpost.a
+LIBS += EVM3530_ITBOK/libitbok.a
 
 LIBS := $(addprefix $(obj),$(LIBS))
 .PHONY : $(LIBS) $(TIMESTAMP_FILE) $(VERSION_FILE)

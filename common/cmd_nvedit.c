@@ -43,6 +43,7 @@
 #include <command.h>
 #include <environment.h>
 #include <asm/arch/emac_defs.h>
+#include <twl4030.h>
 #if defined(CONFIG_CMD_EDITENV)
 #include <malloc.h>
 #endif
@@ -682,3 +683,333 @@ U_BOOT_CMD(
 	"    - run the commands in the environment variable(s) 'var'"
 );
 #endif
+
+int do_test_ram(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+    sdram_test();
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	test_ram,	1,		1,	do_test_ram,
+	"print result for SDRAM test",
+	""
+);
+
+//#define DEBUG_CHECK_PWR
+
+int do_test_pwr(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+    unsigned int i = 0;
+    unsigned char val1, val2;
+
+    if(i2c_get_bus_num()) i2c_set_bus_num(0);
+
+    //	VMPU	1.2 V
+    
+    //	VCORE	1.2 V
+/*    
+    //	VIO	1.8 V
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VDAC_DEDICATED,	//	0X99
+				TWL4030_PM_RECEIVER_VIO_VSEL,		//	0XAF
+				TWL4030_PM_RECEIVER_VIO_DEV_GRP,	//	0XA6
+				TWL4030_PM_RECEIVER_DEV_GRP_P1);	//	0X20
+*/
+
+    //	VAUX1	3.0 V
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX1_DEDICATED,	//	0X75
+				0x04,//TWL4030_PM_RECEIVER_VAUX1_VSEL_30,
+				TWL4030_PM_RECEIVER_VAUX1_DEV_GRP,	//	0X72
+				TWL4030_PM_RECEIVER_DEV_GRP_P1);	//	0X20
+
+	for(i = 0; i < 3; i++)
+	{
+	    if(!(twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+				&val1,
+				TWL4030_PM_RECEIVER_VAUX1_DEV_GRP)))
+									break;
+	    else udelay (1000 + i * 10000);
+	}
+
+	for(i = 0; i < 3; i++)
+	{
+	    if(!(twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+				&val2,
+				TWL4030_PM_RECEIVER_VAUX1_DEDICATED)))
+									break;
+	    else udelay (1000 + i * 10000);
+	}
+
+	if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+		val2 == 0x04))
+#ifndef DEBUG_CHECK_PWR
+						    i = 1;
+#else
+						    printf("No VAUX1 active.\n");
+	else
+    						    printf("Active VAUX1 found.\n");
+#endif
+
+    //	VDAC	1.8 V
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VDAC_DEDICATED,	//	0X99
+				TWL4030_PM_RECEIVER_VDAC_VSEL_18,	//	0X03
+				TWL4030_PM_RECEIVER_VDAC_DEV_GRP,	//	0X96
+				TWL4030_PM_RECEIVER_DEV_GRP_P1);	//	0X20
+
+	for(i = 0; i < 3; i++)
+	{
+	    if(!(twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+				&val1,
+				TWL4030_PM_RECEIVER_VDAC_DEV_GRP)))
+									break;
+	    else udelay (1000 + i * 10000);
+	}
+
+	for(i = 0; i < 3; i++)
+	{
+	    if(!(twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+				&val2,
+				TWL4030_PM_RECEIVER_VDAC_DEDICATED)))
+									break;
+	    else udelay (1000 + i * 10000);
+	}
+
+	if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+		val2 == TWL4030_PM_RECEIVER_VDAC_VSEL_18))
+#ifndef DEBUG_CHECK_PWR
+						    i = 1;
+#else
+						    printf("No VDAC active.\n");
+	else
+    						    printf("Active VDAC found.\n");
+#endif
+
+    //	VPLL2	1.8 V
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VPLL2_DEDICATED,	//	0X91
+				TWL4030_PM_RECEIVER_VPLL2_VSEL_18,	//	0X05
+				TWL4030_PM_RECEIVER_VPLL2_DEV_GRP,	//	0X8E
+				TWL4030_PM_RECEIVER_DEV_GRP_ALL);	//	0XE0
+
+	for(i = 0; i < 3; i++)
+	{
+	    if(!(twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+				&val1,
+				TWL4030_PM_RECEIVER_VPLL2_DEV_GRP)))
+									break;
+	    else udelay (1000 + i * 10000);
+	}
+
+	for(i = 0; i < 3; i++)
+	{
+	    if(!(twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+				&val2,
+				TWL4030_PM_RECEIVER_VPLL2_DEDICATED)))
+									break;
+	    else udelay (1000 + i * 10000);
+	}
+
+	if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+		val2 == TWL4030_PM_RECEIVER_VPLL2_VSEL_18))
+#ifndef DEBUG_CHECK_PWR
+						    i = 1;
+#else
+						    printf("No VPLL2 active.\n");
+	else
+    						    printf("Active VPLL2 found.\n");
+#endif
+
+    //	VMMC	3.0 V
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VMMC1_DEDICATED,	//	0X85
+				TWL4030_PM_RECEIVER_VMMC1_VSEL_30,	//	0X02
+				TWL4030_PM_RECEIVER_VMMC1_DEV_GRP,	//	0X82
+				TWL4030_PM_RECEIVER_DEV_GRP_P1);	//	0X20
+
+	for(i = 0; i < 3; i++)
+	{
+	    if(!(twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+				&val1,
+				TWL4030_PM_RECEIVER_VMMC1_DEV_GRP)))
+									break;
+	    else udelay (1000 + i * 10000);
+	}
+
+	for(i = 0; i < 3; i++)
+	{
+	    if(!(twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+				&val2,
+				TWL4030_PM_RECEIVER_VMMC1_DEDICATED)))
+									break;
+	    else udelay (1000 + i * 10000);
+	}
+
+	if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+		val2 == TWL4030_PM_RECEIVER_VMMC1_VSEL_30))
+#ifndef DEBUG_CHECK_PWR
+						    i = 1;
+#else
+						    printf("No VMMC1 active.\n");
+	else
+    						    printf("Active VMMC1 found.\n");
+#endif
+
+    //	VAUX3	2.8 V
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX3_DEDICATED,	//	0X7D
+				TWL4030_PM_RECEIVER_VAUX3_VSEL_28,	//	0X03
+				TWL4030_PM_RECEIVER_VAUX3_DEV_GRP,	//	0X7A
+				TWL4030_PM_RECEIVER_DEV_GRP_P1);	//	0X20
+
+	for(i = 0; i < 3; i++)
+	{
+	    if(!(twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+				&val1,
+				TWL4030_PM_RECEIVER_VAUX3_DEV_GRP)))
+									break;
+	    else udelay (1000 + i * 10000);
+	}
+
+	for(i = 0; i < 3; i++)
+	{
+	    if(!(twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+				&val2,
+				TWL4030_PM_RECEIVER_VAUX3_DEDICATED)))
+									break;
+	    else udelay (1000 + i * 10000);
+	}
+
+	if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+		val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
+#ifndef DEBUG_CHECK_PWR
+						    i = 1;
+#else
+						    printf("No VAUX3 active.\n");
+	else
+    						    printf("Active VAUX3 found.\n");
+#endif
+
+    //	VAUX4	2.5 V
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX4_DEDICATED,	//	0X81
+				TWL4030_PM_RECEIVER_VAUX4_VSEL_25,	//	0X07
+				TWL4030_PM_RECEIVER_VAUX4_DEV_GRP,	//	0X7E
+				TWL4030_PM_RECEIVER_DEV_GRP_P1);	//	0X20
+
+	for(i = 0; i < 3; i++)
+	{
+	    if(!(twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+				&val1,
+				TWL4030_PM_RECEIVER_VAUX4_DEV_GRP)))
+									break;
+	    else udelay (1000 + i * 10000);
+	}
+
+	for(i = 0; i < 3; i++)
+	{
+	    if(!(twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+				&val2,
+				TWL4030_PM_RECEIVER_VAUX4_DEDICATED)))
+									break;
+	    else udelay (1000 + i * 10000);
+	}
+
+	if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+		val2 == TWL4030_PM_RECEIVER_VAUX4_VSEL_25))
+#ifndef DEBUG_CHECK_PWR
+						    i = 1;
+#else
+						    printf("No VAUX4 active.\n");
+	else
+    						    printf("Active VAUX4 found.\n");
+#endif
+
+//    twl4030_power_init();
+//    twl4030_power_mmc_init();
+
+	if(!i)
+	{
+		printf("\n>TEST START!\n");
+
+		for(; i < 40000; i++) udelay(1000);
+
+		i = 0;
+	}
+
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX1_DEDICATED,	//	0X75
+				0x04,//TWL4030_PM_RECEIVER_VAUX1_VSEL_30,
+				TWL4030_PM_RECEIVER_VAUX1_DEV_GRP,	//	0X72
+				0);	//	0X20
+/*
+	twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+			    &val1,
+			    TWL4030_PM_RECEIVER_VAUX1_DEV_GRP);
+        twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+    			    &val2,
+			    TWL4030_PM_RECEIVER_VAUX1_DEDICATED);
+
+	if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+		val2 == 0x04))
+						    printf("No VAUX1 active.\n");
+	else
+    						    printf("Active VAUX1 found.\n");
+*/
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX3_DEDICATED,
+				TWL4030_PM_RECEIVER_VAUX3_VSEL_28,
+				TWL4030_PM_RECEIVER_VAUX3_DEV_GRP,
+				0);
+/*
+	twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+			    &val1,
+        		    TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
+
+        twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+    			     &val2,
+        		    TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+
+	if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+		val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
+						    printf("No VAUX3 active.\n");
+	else
+    						    printf("Active VAUX3 found.\n");
+*/
+
+	if(!i) printf("\n>TEST DONE\r\n\n");
+	else  printf("\nAny sources is not found... Try again!\r\n\n");
+
+	return i;
+}
+
+U_BOOT_CMD(
+	test_pwr_level,	1,		1,	do_test_pwr,
+	"run POWER test and print result",
+	""
+);
+
+int do_test_freq(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	puts("Wait for test a few second ...\n");
+	u32 count = test_clk();
+
+	if(count > 259948000 && count < 260052000) 	printf("\n>TEST OK\r\n");
+	else						printf("\n>TEST ERROR\r\n");
+//printf("\n>i = %d\r\n", count);
+	return 0;
+}
+
+U_BOOT_CMD(
+	test_freq,	1,		1,	do_test_freq,
+	"run CLOCK test and print result",
+	""
+);
+
+int do_test_runlin(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+    
+	printf("\n>TEST DONE\n");
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	test_runlin,	1,		1,	do_test_runlin,
+	"boot Linux in test mode",
+	""
+);

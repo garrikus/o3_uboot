@@ -145,8 +145,9 @@ static void dsi_tmp_reset_fix()
 
 #define I2C_ACCUM_DEBUG
 
-//#define CONFIG_TWL4030_USB
-//#define CONFIG_MUSB_HCD
+#define SHUTDOWN twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P2_SW_EVENTS); \
+		 twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P3_SW_EVENTS); \
+		 twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P1_SW_EVENTS);
 
 
 
@@ -155,113 +156,6 @@ static void check_accum()
 #ifdef I2C_ACCUM_DEBUG
 	printf("\n   =========================================================================================	\n\n");
 #endif
-
-/*
-
-
-i2c_set_bus_num(0);
-
-	if(!i2c_probe (0x48))
-	{
-	    int j, k;
-	    unsigned char a, result;
-	
-	    while(1)
-	    {
-		j = 0xFFFF;
-		k = 0xFFFF;
-		
-		for(a = 0; a < 3; a++)
-		{
-		    if(!smb_read(0x48, 0xAA, &result))
-		    {
-			printf("BCC_CTRL       value = 0x%02x\n", result);
-			break;
-		    }
-		    else udelay (1000 + a * 10000);
-		}
-		
-		for(a = 0; a < 3; a++)
-		{
-		    if(!smb_read(0x48, 0xAB, &result))
-		    {
-			printf("BCC_CTRL2      value = 0x%02x\n", result);
-			break;
-		    }
-		    else udelay (1000 + a * 10000);
-		}
-		
-		for(a = 0; a < 3; a++)
-		{
-		    if(!smb_read(0x48, 0xAC, &result))
-		    {
-			printf("BCC_STS        value = 0x%02x\n", result);
-			break;
-		    }
-		    else udelay (1000 + a * 10000);
-		}
-		
-		for(a = 0; a < 3; a++)
-		{
-		    if(!smb_read(0x48, 0xAD, &result))
-		    {
-			printf("USB_CHGR_CTRL1 value = 0x%02x\n", result);
-			break;
-		    }
-		    else udelay (1000 + a * 10000);
-		}
-		
-		for(a = 0; a < 3; a++)
-		{
-		    if(!smb_read(0x48, 0xAE, &result))
-		    {
-			printf("USB_CHGR_CTRL2 value = 0x%02x\n\n", result);
-			break;
-		    }
-		    else udelay (1000 + a * 10000);
-		}
-		
-		while(j--)
-		{
-		    while(k--);
-		}
-		j = 0xFFFF;
-		k = 0xFFFF;
-		
-		while(j--)
-		{
-		    while(k--);
-		}
-		j = 0xFFFF;
-		k = 0xFFFF;
-		
-		while(j--)
-		{
-		    while(k--);
-		}
-		j = 0xFFFF;
-		k = 0xFFFF;
-		
-		while(j--)
-		{
-		    while(k--);
-		}
-	    }
-	}
-	else printf("DEVICE 0x48 FAILED!!!\n");
-
-*/
-
-
-
-
-
-
-
-
-
-
-
 
 	if(i2c_get_bus_num() != 2 && i2c_set_bus_num(2) < 0)
 	{
@@ -305,9 +199,9 @@ i2c_set_bus_num(0);
 		    else udelay (1000 + i * 10000);
 		}
 #ifdef I2C_ACCUM_DEBUG
-		printf("VALUE OF VOLTAGE ACCUM IS %d mV or 0x%02x\n", voltage, voltage);
+		printf("VALUE OF VOLTAGE ACCUM IS %d.%d V or 0x%02x\n", voltage/1000, voltage%1000, voltage);
 #else
-		printf("VALUE OF VOLTAGE ACCUM IS %d mV\n", voltage);
+		printf("VALUE OF VOLTAGE ACCUM IS %d.%d V\n", voltage/1000, voltage%1000);
 #endif
 
 ///udelay(50000);
@@ -371,9 +265,7 @@ i2c_set_bus_num(0);
 			    {
 				printf("\nSHUTDOWN!\n");
 				i2c_set_bus_num(0);
-				twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P2_SW_EVENTS);
-				twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P3_SW_EVENTS);
-				twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P1_SW_EVENTS);
+				SHUTDOWN
 			    }
 			}
 			else printf("REG4 test of CHGR FAILED... ERROR = %d\n", error);

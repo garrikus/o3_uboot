@@ -867,6 +867,7 @@ static void *boot_get_kernel (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]
 		printf ("## Booting kernel from Legacy Image at %08lx ...\n",
 				img_addr);
 		hdr = image_get_kernel (img_addr, images->verify);
+
 		if (!hdr)
 			return NULL;
 		show_boot_progress (5);
@@ -1468,3 +1469,428 @@ static int do_bootm_integrity (int flag, int argc, char *argv[],
 	return 1;
 }
 #endif
+
+
+static void* get_kernel_for_check(cmd_tbl_t* cmdtp, int flag, int argc, char* argv[],
+				  bootm_headers_t* images, ulong* os_data, ulong* os_len)
+{
+	image_header_t	*hdr;
+	ulong		img_addr;
+#if defined(CONFIG_FIT)
+	void		*fit_hdr;
+	const char	*fit_uname_config = NULL;
+	const char	*fit_uname_kernel = NULL;
+	const void	*data;
+	size_t		len;
+	int		cfg_noffset;
+	int		os_noffset;
+#endif
+
+	/* find out kernel image address */
+	if (argc < 2) {
+		img_addr = load_addr;
+		debug ("*  kernel: default image load address = 0x%08lx\n",
+				load_addr);
+#if defined(CONFIG_FIT)
+	} else if (fit_parse_conf (argv[1], load_addr, &img_addr,
+							&fit_uname_config)) {
+		debug ("*  kernel: config '%s' from image at 0x%08lx\n",
+				fit_uname_config, img_addr);
+	} else if (fit_parse_subimage (argv[1], load_addr, &img_addr,
+							&fit_uname_kernel)) {
+		debug ("*  kernel: subimage '%s' from image at 0x%08lx\n",
+				fit_uname_kernel, img_addr);
+#endif
+	} else {
+		img_addr = simple_strtoul(argv[1], NULL, 16);
+		debug ("*  kernel: cmdline image address = 0x%08lx\n", img_addr);
+	}
+
+	show_boot_progress (1);
+
+	/* copy from dataflash if needed */
+	img_addr = genimg_get_image (img_addr);
+
+	/* check image type, for FIT images get FIT kernel node */
+	*os_data = *os_len = 0;
+
+
+
+
+printf("img_addr = 0x%lx\nformat = 0x%lx\n", img_addr, genimg_get_format ((void *)img_addr));
+
+//int format = 1;
+
+
+	switch (genimg_get_format ((void *)img_addr)) {
+//	switch (format) {
+	case IMAGE_FORMAT_LEGACY:
+		printf ("## Booting kernel from Legacy Image at %08lx ...\n",
+				img_addr);
+		hdr = image_get_kernel (img_addr, images->verify);
+
+		if (!hdr)
+			return NULL;
+		show_boot_progress (5);
+
+		/* get os_data and os_len */
+		switch (image_get_type (hdr)) {
+		case IH_TYPE_KERNEL:
+			*os_data = image_get_data (hdr);
+			*os_len = image_get_data_size (hdr);
+			break;
+		case IH_TYPE_MULTI:
+			image_multi_getimg (hdr, 0, os_data, os_len);
+			break;
+		case IH_TYPE_STANDALONE:
+			*os_data = image_get_data (hdr);
+			*os_len = image_get_data_size (hdr);
+			break;
+		default:
+			printf ("Wrong Image Type for %s command\n", cmdtp->name);
+			show_boot_progress (-5);
+			return NULL;
+		}
+
+		/*
+		 * copy image header to allow for image overwrites during kernel
+		 * decompression.
+		 */
+		memmove (&images->legacy_hdr_os_copy, hdr, sizeof(image_header_t));
+
+		/* save pointer to image header */
+		images->legacy_hdr_os = hdr;
+
+		images->legacy_hdr_valid = 1;
+		show_boot_progress (6);
+		break;
+#if defined(CONFIG_FIT)
+	case IMAGE_FORMAT_FIT:
+		fit_hdr = (void *)img_addr;
+		printf ("## Booting kernel from FIT Image at %08lx ...\n",
+				img_addr);
+
+		if (!fit_check_format (fit_hdr)) {
+			puts ("Bad FIT kernel image format!\n");
+			show_boot_progress (-100);
+			return NULL;
+		}
+		show_boot_progress (100);
+
+		if (!fit_uname_kernel) {
+			/*
+			 * no kernel image node unit name, try to get config
+			 * node first. If config unit node name is NULL
+			 * fit_conf_get_node() will try to find default config node
+			 */
+			show_boot_progress (101);
+			cfg_noffset = fit_conf_get_node (fit_hdr, fit_uname_config);
+			if (cfg_noffset < 0) {
+				show_boot_progress (-101);
+				return NULL;
+			}
+			/* save configuration uname provided in the first
+			 * bootm argument
+			 */
+			images->fit_uname_cfg = fdt_get_name (fit_hdr, cfg_noffset, NULL);
+			printf ("   Using '%s' configuration\n", images->fit_uname_cfg);
+			show_boot_progress (103);
+
+			os_noffset = fit_conf_get_kernel_node (fit_hdr, cfg_noffset);
+			fit_uname_kernel = fit_get_name (fit_hdr, os_noffset, NULL);
+		} else {
+			/* get kernel component image node offset */
+			show_boot_progress (102);
+			os_noffset = fit_image_get_node (fit_hdr, fit_uname_kernel);
+		}
+		if (os_noffset < 0) {
+			show_boot_progress (-103);
+			return NULL;
+		}
+
+		printf ("   Trying '%s' kernel subimage\n", fit_uname_kernel);
+
+		show_boot_progress (104);
+		if (!fit_check_kernel (fit_hdr, os_noffset, images->verify))
+			return NULL;
+
+		/* get kernel image data address and length */
+		if (fit_image_get_data (fit_hdr, os_noffset, &data, &len)) {
+			puts ("Could not find kernel subimage data!\n");
+			show_boot_progress (-107);
+			return NULL;
+		}
+		show_boot_progress (108);
+
+		*os_len = len;
+		*os_data = (ulong)data;
+		images->fit_hdr_os = fit_hdr;
+		images->fit_uname_os = fit_uname_kernel;
+		images->fit_noffset_os = os_noffset;
+		break;
+#endif
+	default:
+		printf ("Wrong Image Format for %s command\n", cmdtp->name);
+		printf("img_addr = 0x%lx\nIMAGE_FORMAT_LEGACY = 0x%lx\n", img_addr, IMAGE_FORMAT_LEGACY);
+		show_boot_progress (-108);
+		return NULL;
+	}
+
+	debug ("   kernel data at 0x%08lx, len = 0x%08lx (%ld)\n",
+			*os_data, *os_len, *os_len);
+
+	return (void *)img_addr;
+}
+
+static int boot_test_start(cmd_tbl_t* cmdtp, int flag, int argc, char* argv[])
+{
+	void		*os_hdr;
+	int		ret;
+
+	memset ((void *)&images, 0, sizeof (images));
+	images.verify = getenv_yesno ("verify");
+
+	bootm_start_lmb();
+
+	/* get kernel image header, start address and length */
+	os_hdr = get_kernel_for_check(cmdtp, flag, argc, argv,
+			&images, &images.os.image_start, &images.os.image_len);
+	if (images.os.image_len == 0) {
+		puts ("WTF! len =0! ERROR: can't get kernel image!\n");
+		return 1;
+	}
+
+	/* get image parameters */
+	switch (genimg_get_format (os_hdr)) {
+	case IMAGE_FORMAT_LEGACY:
+		images.os.type = image_get_type (os_hdr);
+		images.os.comp = image_get_comp (os_hdr);
+		images.os.os = image_get_os (os_hdr);
+
+		images.os.end = image_get_image_end (os_hdr);
+		images.os.load = image_get_load (os_hdr);
+		break;
+#if defined(CONFIG_FIT)
+	case IMAGE_FORMAT_FIT:
+		if (fit_image_get_type (images.fit_hdr_os,
+					images.fit_noffset_os, &images.os.type)) {
+			puts ("Can't get image type!\n");
+			show_boot_progress (-109);
+			return 1;
+		}
+
+		if (fit_image_get_comp (images.fit_hdr_os,
+					images.fit_noffset_os, &images.os.comp)) {
+			puts ("Can't get image compression!\n");
+			show_boot_progress (-110);
+			return 1;
+		}
+
+		if (fit_image_get_os (images.fit_hdr_os,
+					images.fit_noffset_os, &images.os.os)) {
+			puts ("Can't get image OS!\n");
+			show_boot_progress (-111);
+			return 1;
+		}
+
+		images.os.end = fit_get_end (images.fit_hdr_os);
+
+		if (fit_image_get_load (images.fit_hdr_os, images.fit_noffset_os,
+					&images.os.load)) {
+			puts ("Can't get image load address!\n");
+			show_boot_progress (-112);
+			return 1;
+		}
+		break;
+#endif
+	default:
+		puts ("ERROR: unknown image format type!\n");
+		return 1;
+	}
+
+	/* find kernel entry point */
+	if (images.legacy_hdr_valid) {
+		images.ep = image_get_ep (&images.legacy_hdr_os_copy);
+#if defined(CONFIG_FIT)
+	} else if (images.fit_uname_os) {
+		ret = fit_image_get_entry (images.fit_hdr_os,
+				images.fit_noffset_os, &images.ep);
+		if (ret) {
+			puts ("Can't get entry point property!\n");
+			return 1;
+		}
+#endif
+	} else {
+		puts ("Could not find kernel entry point!\n");
+		return 1;
+	}
+
+	if (((images.os.type == IH_TYPE_KERNEL) ||
+	     (images.os.type == IH_TYPE_MULTI)) &&
+	    (images.os.os == IH_OS_LINUX)) {
+		/* find ramdisk */
+		ret = boot_get_ramdisk (argc, argv, &images, IH_INITRD_ARCH,
+				&images.rd_start, &images.rd_end);
+		if (ret) {
+			puts ("Ramdisk image is corrupt or invalid\n");
+			return 1;
+		}
+
+#if defined(CONFIG_OF_LIBFDT)
+#if defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_SPARC)
+		/* find flattened device tree */
+		ret = boot_get_fdt (flag, argc, argv, &images,
+				    &images.ft_addr, &images.ft_len);
+		if (ret) {
+			puts ("Could not find a valid device tree\n");
+			return 1;
+		}
+
+		set_working_fdt_addr(images.ft_addr);
+#endif
+#endif
+	}
+
+	images.os.start = (ulong)os_hdr;
+	images.state = BOOTM_STATE_START;
+
+	return 0;
+}
+
+int do_test_nand(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+puts("\nXEP B HOCKAX!\n");
+
+	check_kernel_crc("run nandboot;\0", FLAG_PARSE_SEMICOLON);// | FLAG_EXIT_FROM_LOOP);
+
+//cmd_tbl_t* cmdtp;
+//char* str[] = {"run", "nandboot"};
+//char* str[] = {"boot"};
+//cmdtp = find_cmd("bootm");
+//(cmdtp->cmd)(cmdtp, 0, 1, str);
+/*
+flag = 0;
+argc = 2;
+argv[0] = "bootm";
+argv[1] = "0x82000000";
+*/
+
+//-----------------------------------------------------------------------------------------------------------
+
+
+	ulong		iflag;
+	ulong		load_end = 0;
+	int		ret;
+	boot_os_fn	*boot_fn;
+
+	/* determine if we have a sub command */
+	if (argc > 1) {
+		char *endp;
+
+		simple_strtoul(argv[1], &endp, 16);
+		/* endp pointing to NULL means that argv[1] was just a
+		 * valid number, pass it along to the normal bootm processing
+		 *
+		 * If endp is ':' or '#' assume a FIT identifier so pass
+		 * along for normal processing.
+		 *
+		 * Right now we assume the first arg should never be '-'
+		 */
+		if ((*endp != 0) && (*endp != ':') && (*endp != '#'))
+			return do_bootm_subcommand(cmdtp, flag, argc, argv);
+	}
+
+	if (boot_test_start(cmdtp, flag, argc, argv))
+		return 1;
+
+	/*
+	 * We have reached the point of no return: we are going to
+	 * overwrite all exception vector code, so we cannot easily
+	 * recover from any failures any more...
+	 */
+	iflag = disable_interrupts();
+
+	ret = bootm_load_os(images.os, &load_end, 1);
+
+	if (ret < 0) {
+		if (ret == BOOTM_ERR_RESET)
+			do_reset (cmdtp, flag, argc, argv);
+		if (ret == BOOTM_ERR_OVERLAP) {
+			if (images.legacy_hdr_valid) {
+				if (image_get_type (&images.legacy_hdr_os_copy) == IH_TYPE_MULTI)
+					puts ("WARNING: legacy format multi component "
+						"image overwritten\n");
+			} else {
+				puts ("ERROR: new format image overwritten - "
+					"must RESET the board to recover\n");
+				show_boot_progress (-113);
+				do_reset (cmdtp, flag, argc, argv);
+			}
+		}
+		if (ret == BOOTM_ERR_UNIMPLEMENTED) {
+			if (iflag)
+				enable_interrupts();
+			show_boot_progress (-7);
+			return 1;
+		}
+	}
+
+	lmb_reserve(&images.lmb, images.os.load, (load_end - images.os.load));
+
+	if (images.os.type == IH_TYPE_STANDALONE) {
+		if (iflag)
+			enable_interrupts();
+		/* This may return when 'autostart' is 'no' */
+		bootm_start_standalone(iflag, argc, argv);
+		return 0;
+	}
+
+	show_boot_progress (8);
+
+#ifdef CONFIG_SILENT_CONSOLE
+	if (images.os.os == IH_OS_LINUX)
+		fixup_silent_linux();
+#endif
+
+	boot_fn = boot_os[images.os.os];
+
+	if (boot_fn == NULL) {
+		if (iflag)
+			enable_interrupts();
+		printf ("ERROR: booting os '%s' (%d) is not supported\n",
+			genimg_get_os_name(images.os.os), images.os.os);
+		show_boot_progress (-8);
+		return 1;
+	}
+
+	arch_preboot_os();
+
+	boot_fn(0, argc, argv, &images);
+
+	show_boot_progress (-9);
+#ifdef DEBUG
+	puts ("\n## Control returned to monitor - resetting...\n");
+#endif
+	do_reset (cmdtp, flag, argc, argv);
+
+//	return 1;
+
+
+
+
+//-----------------------------------------------------------------------------------------------------------
+
+
+
+
+
+	printf("\n>TEST OK\n");
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	test_nand, 1,	1,	do_test_nand,
+	"run NAND test and print result",
+	""
+);
