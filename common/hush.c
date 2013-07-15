@@ -1705,11 +1705,40 @@ static int run_pipe_real(struct pipe *pi)
 #else
 				/* OK - call function to do the command */
 
-				rcode = (cmdtp->cmd)
-(cmdtp, flag,child->argc-i,&child->argv[i]);
+
+	static int flag_for_test = 0;
+
+			extern int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+			extern int do_bootm_for_test (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+			extern int do_test_nand (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+
+	if(cmdtp->cmd == do_test_nand) flag_for_test = 1;
+	
+	if(flag_for_test && cmdtp->cmd == do_bootm)
+	{
+		flag_for_test = 0;
+		cmdtp->cmd = do_bootm_for_test;
+	}
+
+/*
+			if (cmdtp->cmd == do_bootm)
+			{
+//				cmdtp->cmd = do_bootm_for_test;
+				puts("do_bootm\n");
+			}
+			else if (cmdtp->cmd == do_mmc)	puts("do_mmc real\n");
+			else if (cmdtp->cmd == do_run)	puts("do_run real\n");
+			else if (cmdtp->cmd == do_echo)	puts("do_echo real\n");
+			else if (cmdtp->cmd == do_setenv)	puts("do_setenv real\n");
+			else if (cmdtp->cmd == do_nand)	puts("do_nand real\n");
+			else if (cmdtp->cmd == do_test_nand)	puts("do_test_nand real\n");
+*/
+
+			rcode = (cmdtp->cmd)
+						(cmdtp, flag,child->argc-i,&child->argv[i]);
+
 				if ( !cmdtp->repeatable )
 					flag_repeat = 0;
-
 
 #endif
 				child->argv-=i;  /* XXX restore hack so free() can work right */
@@ -3640,8 +3669,8 @@ U_BOOT_CMD(
 
 
 
-
-
+/*
+static int run_eal(struct pipe*);
 
 
 
@@ -3661,35 +3690,24 @@ static int run_pipe_eal(struct pipe *pi)
 
 	nextin = 0;
 
-	/* Check if this is a simple builtin (not part of a pipe).
-	 * Builtins within pipes have to fork anyway, and are handled in
-	 * pseudo_exec.  "echo foo | read bar" doesn't work on bash, either.
-	 */
 	if (pi->num_progs == 1) child = & (pi->progs[0]);
 
 	if (pi->num_progs == 1 && child->group)
 	{
 		int rcode;
-		debug_printf("non-subshell grouping\n");
-		rcode = run_list_real(child->group);
+//		debug_printf("non-subshell grouping\n");
+		rcode = run_eal(child->group);
 
 		return rcode;
 	}
 	else if (pi->num_progs == 1 && pi->progs[0].argv != NULL)
 	     {
-		for (i=0; is_assignment(child->argv[i]); i++) { /* nothing */ }
+		for (i=0; is_assignment(child->argv[i]); i++);
 
 		if (i!=0 && child->argv[i]==NULL)
 		{
-			/* assignments, but no command: set the local environment */
 			for (i=0; child->argv[i]!=NULL; i++)
 			{
-				/* Ok, this case is tricky.  We have to decide if this is a
-				 * local variable, or an already exported variable.  If it is
-				 * already exported, we have to export the new value.  If it is
-				 * not exported, we need only set this as a local variable.
-				 * This junk is all to decide whether or not to export this
-				 * variable. */
 				int export_me=0;
 				char *name, *value;
 				name = xstrdup(child->argv[i]);
@@ -3705,7 +3723,7 @@ static int run_pipe_eal(struct pipe *pi)
 				if (p != child->argv[i]) free(p);
 			}
 
-			return EXIT_SUCCESS;   /* don't worry about errors in set_local_var() yet */
+			return EXIT_SUCCESS;   // don't worry about errors in set_local_var() yet
 		}
 
 		for (i = 0; is_assignment(child->argv[i]); i++)
@@ -3725,32 +3743,42 @@ static int run_pipe_eal(struct pipe *pi)
 			char * str = NULL;
 
 			str = make_string((child->argv + i));
+
 			parse_string_outer(str, FLAG_EXIT_FROM_LOOP | FLAG_REPARSING);
 			free(str);
 			return last_return_code;
 		}
-			/* check ";", because ,example , argv consist from
-			 * "help;flinfo" must not execute
-			 */
+			// check ";", because ,example , argv consist from
+			// "help;flinfo" must not execute
 		if (strchr(child->argv[i], ';'))
 		{
 			printf ("Unknown command '%s' - try 'help' or use 'run' command\n",
 				child->argv[i]);
 			return -1;
 		}
-			/* Look up command in command table */
+			// Look up command in command table
 		if ((cmdtp = find_cmd(child->argv[i])) == NULL)
 		{
 			printf ("Unknown command '%s' - try 'help'\n", child->argv[i]);
-			return -1;	/* give up after bad command */
+			return -1;	// give up after bad command
 		}
 		else
 		{
 			int rcode;
 
 			extern int do_bootd (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+			extern int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+			extern int do_bootm_for_test (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 
-		/* avoid "bootd" recursion */
+
+			extern int do_mmc (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+			extern int do_run (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+			extern int do_echo (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+			extern int do_setenv (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+			extern int do_nand (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+
+
+		// avoid "bootd" recursion
 			if (cmdtp->cmd == do_bootd)
 			{
 				if (flag & CMD_FLAG_BOOTD)
@@ -3761,28 +3789,38 @@ static int run_pipe_eal(struct pipe *pi)
 				else
 					flag |= CMD_FLAG_BOOTD;
 			}
-			/* found - check max args */
+			// found - check max args
 			if ((child->argc - i) > cmdtp->maxargs)
 			{
 				cmd_usage(cmdtp);
 				return -1;
 			}
 
-			child->argv+=i;  /* XXX horrible hack */
+			child->argv+=i;  // XXX horrible hack
 
-printf("\nName is '%s'\n", cmdtp->name);
-printf("flag = %d\nargc = %d\ni = %d\nargv 1 is '%s'\nargv 2 is '%s'\n",
-	flag, child->argc, i, child->argv[0], child->argv[1]);
-return -1;
+puts(">>>>>>>>>>>>>>>>>>> ACHTUNG >>>>>>>>>>>>>>>>>>>>>>\n");
 
-			/* OK - call function to do the command */
+			if (cmdtp->cmd == do_bootm)
+			{
+				cmdtp->cmd = do_bootm_for_test;
+				puts("do_bootm\n");
+			}
+			else if (cmdtp->cmd == do_mmc)	puts("do_mmc\n");
+			else if (cmdtp->cmd == do_run)	puts("do_run\n");
+			else if (cmdtp->cmd == do_echo)	puts("do_echo\n");
+			else if (cmdtp->cmd == do_setenv)	puts("do_setenv\n");
+			else if (cmdtp->cmd == do_nand)	puts("do_nand\n");
+
+
+
+			// OK - call function to do the command
 			rcode = (cmdtp->cmd)
 				    (cmdtp, flag,child->argc-i,&child->argv[i]);
 
 			if ( !cmdtp->repeatable )
 					flag_repeat = 0;
 
-			child->argv-=i;  /* XXX restore hack so free() can work right */
+			child->argv-=i;  // XXX restore hack so free() can work right
 
 			return rcode;
 	    }
@@ -3802,41 +3840,15 @@ static int run_eal(struct pipe *pi)
 	int flag_rep = 0;
 	int rcode=0, flag_skip=1;
 	int flag_restore = 0;
-	int if_code=0, next_if_code=0;  /* need double-buffer to handle elif */
+	int if_code=0, next_if_code=0;  // need double-buffer to handle elif
 	reserved_style rmode, skip_more_in_this_rmode=RES_XXXX;
-
-	/* check syntax for "for" */
-	for (rpipe = pi; rpipe; rpipe = rpipe->next)
-	{
-		if ((rpipe->r_mode == RES_IN ||
-		    rpipe->r_mode == RES_FOR) &&
-		    (rpipe->next == NULL))
-		{
-				syntax();
-
-				flag_repeat = 0;
-
-				return 1;
-		}
-
-		if ((rpipe->r_mode == RES_IN &&
-			(rpipe->next->r_mode == RES_IN &&
-			rpipe->next->progs->argv != NULL))||
-			(rpipe->r_mode == RES_FOR &&
-			rpipe->next->r_mode != RES_IN))
-		{
-				syntax();
-				flag_repeat = 0;
-
-				return 1;
-		}
-	}
 
 	for (; pi; pi = (flag_restore != 0) ? rpipe : pi->next)
 	{
+
 		if (pi->r_mode == RES_WHILE || pi->r_mode == RES_UNTIL ||
 			pi->r_mode == RES_FOR)
-		{	/* check Ctrl-C */
+		{	// check Ctrl-C
 			ctrlc();
 
 			if ((had_ctrlc()))
@@ -3852,7 +3864,7 @@ static int run_eal(struct pipe *pi)
 		}
 
 		rmode = pi->r_mode;
-		debug_printf("rmode=%d  if_code=%d  next_if_code=%d skip_more=%d\n", rmode, if_code, next_if_code, skip_more_in_this_rmode);
+//		debug_printf("rmode=%d  if_code=%d  next_if_code=%d skip_more=%d\n", rmode, if_code, next_if_code, skip_more_in_this_rmode);
 
 		if (rmode == skip_more_in_this_rmode && flag_skip)
 		{
@@ -3870,9 +3882,9 @@ static int run_eal(struct pipe *pi)
 		{
 			if (!list)
 			{
-				/* if no variable values after "in" we skip "for" */
+				// if no variable values after "in" we skip "for"
 				if (!pi->next->progs->argv) continue;
-				/* create list of variable values */
+				// create list of variable values
 				list = make_list_in(pi->next->progs->argv,
 					pi->progs->argv[0]);
 				save_list = list;
@@ -3893,7 +3905,7 @@ static int run_eal(struct pipe *pi)
 			}
 			else
 			{
-				/* insert new value from list for variable */
+				// insert new value from list for variable
 				if (pi->progs->argv[0])
 					free(pi->progs->argv[0]);
 				pi->progs->argv[0] = *list++;
@@ -3917,18 +3929,17 @@ static int run_eal(struct pipe *pi)
 		if (pi->num_progs == 0) continue;
 
 		rcode = run_pipe_eal(pi);
-		debug_printf("run_pipe_real returned %d\n",rcode);
 
 		if (rcode < -1)
 		{
 			last_return_code = -rcode - 2;
-			return -2;	/* exit */
+			return -2;	// exit
 		}
 
 		last_return_code=(rcode == 0) ? 0 : 1;
 
 		if ( rmode == RES_IF || rmode == RES_ELIF )
-			next_if_code=rcode;  /* can be overwritten a number of times */
+			next_if_code=rcode;  // can be overwritten a number of times
 		if (rmode == RES_WHILE)
 			flag_rep = !last_return_code;
 		if (rmode == RES_UNTIL)
@@ -3946,19 +3957,16 @@ static int run_st(struct pipe *pi)
 	int rcode=0;
 
 	rcode = run_eal(pi);
-
-	/* free_pipe_list has the side effect of clearing memory
-	 * In the long run that function can be merged with run_list_real,
-	 * but doing that now would hobble the debugging effort. */
 	free_pipe_list(pi,0);
 	return rcode;
 }
 
 
+
 int rse_eam_ter(struct in_str *inp, int flag)
 {
 	struct p_context ctx;
-	o_string temp=NULL_O_STRING;
+	o_string temp = NULL_O_STRING;
 	int rcode;
 	int code = 0;
 
@@ -3975,23 +3983,17 @@ int rse_eam_ter(struct in_str *inp, int flag)
 
 		if (rcode == 1) flag_repeat = 0;
 
-		if (rcode != 1 && ctx.old_flag != 0)
-		{
-			syntax();
-			flag_repeat = 0;
-		}
-
 		if (rcode != 1 && ctx.old_flag == 0)
 		{
 			done_word(&temp, &ctx);
 			done_pipe(&ctx,PIPE_SEQ);
 			code = run_st(ctx.list_head);
 
-			if (code == -2) 	/* exit */
+			if (code == -2) 	// exit
 			{
 				b_free(&temp);
 				code = 0;
-				/* XXX hackish way to not allow exit from main loop */
+				// XXX hackish way to not allow exit from main loop
 				if (inp->peek == file_peek)
 				{
 					printf("exit not allowed from main input shell.\n");
@@ -4020,7 +4022,7 @@ int rse_eam_ter(struct in_str *inp, int flag)
 
 		b_free(&temp);
 	}
-	while (rcode != -1 && !(flag & FLAG_EXIT_FROM_LOOP));   /* loop on syntax errors, return on EOF */
+	while (rcode != -1 && !(flag & FLAG_EXIT_FROM_LOOP));   // loop on syntax errors, return on EOF
 
 	return (code != 0) ? 1 : 0;
 }
@@ -4030,9 +4032,6 @@ int check_kernel_crc(const char *s, int flag)
 	struct in_str input;
 	char *p = NULL;
 	int rcode;
-
-	if( !s || !*s)
-			return 1;
 
 	if(!(p = strchr(s, '\n')) || *++p)
 	{
@@ -4045,6 +4044,7 @@ int check_kernel_crc(const char *s, int flag)
 		return rcode;
 	}
 
-	setup_string_in_str(&input, s);
+//	setup_string_in_str(&input, s);
 	return 0;//parse_stream_outer(&input, flag);
 }
+*/

@@ -1514,16 +1514,7 @@ static void* get_kernel_for_check(cmd_tbl_t* cmdtp, int flag, int argc, char* ar
 	/* check image type, for FIT images get FIT kernel node */
 	*os_data = *os_len = 0;
 
-
-
-
-printf("img_addr = 0x%lx\nformat = 0x%lx\n", img_addr, genimg_get_format ((void *)img_addr));
-
-//int format = 1;
-
-
 	switch (genimg_get_format ((void *)img_addr)) {
-//	switch (format) {
 	case IMAGE_FORMAT_LEGACY:
 		printf ("## Booting kernel from Legacy Image at %08lx ...\n",
 				img_addr);
@@ -1642,128 +1633,75 @@ printf("img_addr = 0x%lx\nformat = 0x%lx\n", img_addr, genimg_get_format ((void 
 	return (void *)img_addr;
 }
 
-static int boot_test_start(cmd_tbl_t* cmdtp, int flag, int argc, char* argv[])
+
+
+//-------------------------------------------------------------------------------------------------------
+
+
+int do_bootm_for_test(cmd_tbl_t* cmdtp, int flag, int argc, char* argv[])
 {
-	void		*os_hdr;
+/*
+	ulong		iflag;
+	ulong		load_end = 0;
 	int		ret;
+	boot_os_fn	*boot_fn;
 
-	memset ((void *)&images, 0, sizeof (images));
-	images.verify = getenv_yesno ("verify");
+#ifndef CONFIG_RELOC_FIXUP_WORKS
+puts("POINT 1\n");
+	static int relocated = 0;
 
-	bootm_start_lmb();
+	if (!relocated)
+	{
+	puts("POINT 2\n");
+		int i;
+		for (i = 0; i < ARRAY_SIZE(boot_os); i++)
+			if (boot_os[i] != NULL)
+				boot_os[i] += gd->reloc_off;
+		relocated = 1;
+	}
+#endif
 
-	/* get kernel image header, start address and length */
-	os_hdr = get_kernel_for_check(cmdtp, flag, argc, argv,
-			&images, &images.os.image_start, &images.os.image_len);
-	if (images.os.image_len == 0) {
-		puts ("WTF! len =0! ERROR: can't get kernel image!\n");
+	if (argc > 1)
+	{
+		char *endp;
+
+		simple_strtoul(argv[1], &endp, 16);
+
+		if ((*endp) && (*endp != ':') && (*endp != '#'))
+			return do_bootm_subcommand(cmdtp, flag, argc, argv);
+	}
+*/
+	if (bootm_start(cmdtp, flag, argc, argv))
+	{
+		puts("\n>TEST ERROR\r\n");
 		return 1;
 	}
+/*
+	iflag = disable_interrupts();
 
-	/* get image parameters */
-	switch (genimg_get_format (os_hdr)) {
-	case IMAGE_FORMAT_LEGACY:
-		images.os.type = image_get_type (os_hdr);
-		images.os.comp = image_get_comp (os_hdr);
-		images.os.os = image_get_os (os_hdr);
-
-		images.os.end = image_get_image_end (os_hdr);
-		images.os.load = image_get_load (os_hdr);
-		break;
-#if defined(CONFIG_FIT)
-	case IMAGE_FORMAT_FIT:
-		if (fit_image_get_type (images.fit_hdr_os,
-					images.fit_noffset_os, &images.os.type)) {
-			puts ("Can't get image type!\n");
-			show_boot_progress (-109);
-			return 1;
-		}
-
-		if (fit_image_get_comp (images.fit_hdr_os,
-					images.fit_noffset_os, &images.os.comp)) {
-			puts ("Can't get image compression!\n");
-			show_boot_progress (-110);
-			return 1;
-		}
-
-		if (fit_image_get_os (images.fit_hdr_os,
-					images.fit_noffset_os, &images.os.os)) {
-			puts ("Can't get image OS!\n");
-			show_boot_progress (-111);
-			return 1;
-		}
-
-		images.os.end = fit_get_end (images.fit_hdr_os);
-
-		if (fit_image_get_load (images.fit_hdr_os, images.fit_noffset_os,
-					&images.os.load)) {
-			puts ("Can't get image load address!\n");
-			show_boot_progress (-112);
-			return 1;
-		}
-		break;
+#if defined(CONFIG_CMD_USB)
+	usb_stop();
 #endif
-	default:
-		puts ("ERROR: unknown image format type!\n");
-		return 1;
-	}
 
-	/* find kernel entry point */
-	if (images.legacy_hdr_valid) {
-		images.ep = image_get_ep (&images.legacy_hdr_os_copy);
-#if defined(CONFIG_FIT)
-	} else if (images.fit_uname_os) {
-		ret = fit_image_get_entry (images.fit_hdr_os,
-				images.fit_noffset_os, &images.ep);
-		if (ret) {
-			puts ("Can't get entry point property!\n");
-			return 1;
-		}
+#ifdef CONFIG_AMIGAONEG3SE
+	icache_disable();
+	dcache_disable();
 #endif
-	} else {
-		puts ("Could not find kernel entry point!\n");
-		return 1;
-	}
-
-	if (((images.os.type == IH_TYPE_KERNEL) ||
-	     (images.os.type == IH_TYPE_MULTI)) &&
-	    (images.os.os == IH_OS_LINUX)) {
-		/* find ramdisk */
-		ret = boot_get_ramdisk (argc, argv, &images, IH_INITRD_ARCH,
-				&images.rd_start, &images.rd_end);
-		if (ret) {
-			puts ("Ramdisk image is corrupt or invalid\n");
-			return 1;
-		}
-
-#if defined(CONFIG_OF_LIBFDT)
-#if defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_SPARC)
-		/* find flattened device tree */
-		ret = boot_get_fdt (flag, argc, argv, &images,
-				    &images.ft_addr, &images.ft_len);
-		if (ret) {
-			puts ("Could not find a valid device tree\n");
-			return 1;
-		}
-
-		set_working_fdt_addr(images.ft_addr);
-#endif
-#endif
-	}
-
-	images.os.start = (ulong)os_hdr;
-	images.state = BOOTM_STATE_START;
-
+*/
+	puts("\n>TEST OK\r\n");
 	return 0;
 }
 
+
+
 int do_test_nand(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
-puts("\nXEP B HOCKAX!\n");
+//puts("\nXEP B HOCKAX!\n");
 
-	check_kernel_crc("run nandboot;\0", FLAG_PARSE_SEMICOLON);// | FLAG_EXIT_FROM_LOOP);
+//	check_kernel_crc(getenv("bootcmd"), FLAG_PARSE_SEMICOLON);// | FLAG_EXIT_FROM_LOOP);
 
-//cmd_tbl_t* cmdtp;
+parse_string_outer(getenv("bootcmd"), FLAG_PARSE_SEMICOLON);
+
 //char* str[] = {"run", "nandboot"};
 //char* str[] = {"boot"};
 //cmdtp = find_cmd("bootm");
@@ -1775,116 +1713,7 @@ argv[0] = "bootm";
 argv[1] = "0x82000000";
 */
 
-//-----------------------------------------------------------------------------------------------------------
-
-
-	ulong		iflag;
-	ulong		load_end = 0;
-	int		ret;
-	boot_os_fn	*boot_fn;
-
-	/* determine if we have a sub command */
-	if (argc > 1) {
-		char *endp;
-
-		simple_strtoul(argv[1], &endp, 16);
-		/* endp pointing to NULL means that argv[1] was just a
-		 * valid number, pass it along to the normal bootm processing
-		 *
-		 * If endp is ':' or '#' assume a FIT identifier so pass
-		 * along for normal processing.
-		 *
-		 * Right now we assume the first arg should never be '-'
-		 */
-		if ((*endp != 0) && (*endp != ':') && (*endp != '#'))
-			return do_bootm_subcommand(cmdtp, flag, argc, argv);
-	}
-
-	if (boot_test_start(cmdtp, flag, argc, argv))
-		return 1;
-
-	/*
-	 * We have reached the point of no return: we are going to
-	 * overwrite all exception vector code, so we cannot easily
-	 * recover from any failures any more...
-	 */
-	iflag = disable_interrupts();
-
-	ret = bootm_load_os(images.os, &load_end, 1);
-
-	if (ret < 0) {
-		if (ret == BOOTM_ERR_RESET)
-			do_reset (cmdtp, flag, argc, argv);
-		if (ret == BOOTM_ERR_OVERLAP) {
-			if (images.legacy_hdr_valid) {
-				if (image_get_type (&images.legacy_hdr_os_copy) == IH_TYPE_MULTI)
-					puts ("WARNING: legacy format multi component "
-						"image overwritten\n");
-			} else {
-				puts ("ERROR: new format image overwritten - "
-					"must RESET the board to recover\n");
-				show_boot_progress (-113);
-				do_reset (cmdtp, flag, argc, argv);
-			}
-		}
-		if (ret == BOOTM_ERR_UNIMPLEMENTED) {
-			if (iflag)
-				enable_interrupts();
-			show_boot_progress (-7);
-			return 1;
-		}
-	}
-
-	lmb_reserve(&images.lmb, images.os.load, (load_end - images.os.load));
-
-	if (images.os.type == IH_TYPE_STANDALONE) {
-		if (iflag)
-			enable_interrupts();
-		/* This may return when 'autostart' is 'no' */
-		bootm_start_standalone(iflag, argc, argv);
-		return 0;
-	}
-
-	show_boot_progress (8);
-
-#ifdef CONFIG_SILENT_CONSOLE
-	if (images.os.os == IH_OS_LINUX)
-		fixup_silent_linux();
-#endif
-
-	boot_fn = boot_os[images.os.os];
-
-	if (boot_fn == NULL) {
-		if (iflag)
-			enable_interrupts();
-		printf ("ERROR: booting os '%s' (%d) is not supported\n",
-			genimg_get_os_name(images.os.os), images.os.os);
-		show_boot_progress (-8);
-		return 1;
-	}
-
-	arch_preboot_os();
-
-	boot_fn(0, argc, argv, &images);
-
-	show_boot_progress (-9);
-#ifdef DEBUG
-	puts ("\n## Control returned to monitor - resetting...\n");
-#endif
-	do_reset (cmdtp, flag, argc, argv);
-
-//	return 1;
-
-
-
-
-//-----------------------------------------------------------------------------------------------------------
-
-
-
-
-
-	printf("\n>TEST OK\n");
+//	printf("\n>TEST OK\n");
 
 	return 0;
 }
