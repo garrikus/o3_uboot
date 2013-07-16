@@ -1640,80 +1640,19 @@ static void* get_kernel_for_check(cmd_tbl_t* cmdtp, int flag, int argc, char* ar
 
 int do_bootm_for_test(cmd_tbl_t* cmdtp, int flag, int argc, char* argv[])
 {
-/*
-	ulong		iflag;
-	ulong		load_end = 0;
-	int		ret;
-	boot_os_fn	*boot_fn;
-
-#ifndef CONFIG_RELOC_FIXUP_WORKS
-puts("POINT 1\n");
-	static int relocated = 0;
-
-	if (!relocated)
-	{
-	puts("POINT 2\n");
-		int i;
-		for (i = 0; i < ARRAY_SIZE(boot_os); i++)
-			if (boot_os[i] != NULL)
-				boot_os[i] += gd->reloc_off;
-		relocated = 1;
-	}
-#endif
-
-	if (argc > 1)
-	{
-		char *endp;
-
-		simple_strtoul(argv[1], &endp, 16);
-
-		if ((*endp) && (*endp != ':') && (*endp != '#'))
-			return do_bootm_subcommand(cmdtp, flag, argc, argv);
-	}
-*/
 	if (bootm_start(cmdtp, flag, argc, argv))
 	{
 		puts("\n>TEST ERROR\r\n");
 		return 1;
 	}
-/*
-	iflag = disable_interrupts();
 
-#if defined(CONFIG_CMD_USB)
-	usb_stop();
-#endif
-
-#ifdef CONFIG_AMIGAONEG3SE
-	icache_disable();
-	dcache_disable();
-#endif
-*/
 	puts("\n>TEST OK\r\n");
 	return 0;
 }
 
-
-
 int do_test_nand(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
-//puts("\nXEP B HOCKAX!\n");
-
-//	check_kernel_crc(getenv("bootcmd"), FLAG_PARSE_SEMICOLON);// | FLAG_EXIT_FROM_LOOP);
-
-parse_string_outer(getenv("bootcmd"), FLAG_PARSE_SEMICOLON);
-
-//char* str[] = {"run", "nandboot"};
-//char* str[] = {"boot"};
-//cmdtp = find_cmd("bootm");
-//(cmdtp->cmd)(cmdtp, 0, 1, str);
-/*
-flag = 0;
-argc = 2;
-argv[0] = "bootm";
-argv[1] = "0x82000000";
-*/
-
-//	printf("\n>TEST OK\n");
+	parse_string_outer(getenv("bootcmd"), FLAG_PARSE_SEMICOLON);
 
 	return 0;
 }

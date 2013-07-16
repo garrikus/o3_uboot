@@ -705,73 +705,10 @@ void per_clocks_enable(void)
 
 	sdelay(1000);
 }
-/*
-u32 test_clk()
-{
-//	sr32(&prcm_base->clksel_per, 0, 1, 0x1);	/* GPT2 = sys clk /
-//	sr32(&prcm_base->clksel_per, 1, 1, 0x0);	/* GPT3 = sys 32k /
-//	sr32(&prm_base->clksrc_ctrl, 1, 2, 0x3);	/* sys clk = 26 MHz /
-//	sr32(&prm_base->clksel, 0, 1, 0x1);		/* sys clk = 13 MHz /
-////	sr32(&prcm_base->iclken_per, 3, 1, 0x1);	/* ICKen GPT2 /
-//	sr32(&prcm_base->fclken_per, 3, 1, 0x1);	/* FCKen GPT2 /
-//	sr32(&prcm_base->fclken_per, 4, 1, 0x1);	/* FCKen GPT3 /
-
-//	writel(0x01, &prm_base->clksel);
-//	return readl(&prm_base->clksel);
-
-	u32 val, count2 = 0;
-	int i;
-	struct prcm *prcm_base = (struct prcm *)PRCM_BASE;
-	struct prm *prm_base = (struct prm *)PRM_BASE;
-	struct gptimer *gpt2_base = (struct gptimer *)OMAP34XX_GPT2;
-	struct gptimer *gpt3_base = (struct gptimer *)OMAP34XX_GPT3;
-//	struct s32ktimer *s32k_base = (struct s32ktimer *)SYNC_32KTIMER_BASE;
-
-	val = readl(&prm_base->clksrc_ctrl);
-
-	if (!(val & SYSCLKDIV_2))
-		writel((val & (~(3 << 6))) | (1 << 6), &prm_base->clksrc_ctrl);
-
-	val = readl(&prcm_base->fclken_per) | (1 << 3) | (1 << 4);	//FCLK GPtimer2 & GPtimer3 is enabled
-	writel(val, &prcm_base->fclken_per);
-
-	sr32(&prm_base->clksel, 1, 2, 0x3);		// sys clk = 26 MHz
-
-	sr32(&prcm_base->clksel_per, 0, 1, 0x1);	// GPT2 = sys clk /
-	sr32(&prcm_base->clksel_per, 1, 1, 0x0);	// GPT3 = sys 32k /
-
-	writel(0, &gpt2_base->tldr);			// start counting at 0
-	writel(0, &gpt2_base->tcrr);			//set GPT2 to 0
-	writel(0, &gpt3_base->tldr);			// start counting at 0
-	writel(0, &gpt3_base->tcrr);			//set GPT3 to 0
-
-	writel(0x3, &gpt3_base->tclr);		// enable clock - START GPT3
-	writel(0x3, &gpt2_base->tclr);		// enable clock - START GPT2
-
-	for(i = 0; i < 10; i++)
-	{
-		while(readl(&gpt3_base->tcrr) < 32768);
-
-		count2 += readl(&gpt2_base->tcrr);
-
-		writel(0, &gpt2_base->tcrr);			//set GPT2 to 0
-		writel(0, &gpt3_base->tcrr);			//set GPT3 to 0
-	}
-
-	writel(0, &gpt2_base->tclr);		//STOP GPT2
-	writel(0, &gpt3_base->tclr);		//STOP GPT3
-
-//	if(count2 > 259948000 && count2 < 260052000) i = 0;
-//	else i = 1;
-
-	return count2;
-}
-*/
 
 u32 test_clk()
 {
-	u32 val, count2 = 0;
-	int i;
+	u32 val, count = 0;
 	struct prcm *prcm_base = (struct prcm *)PRCM_BASE;
 	struct prm *prm_base = (struct prm *)PRM_BASE;
 	struct gptimer *gpt4_base = (struct gptimer *)OMAP34XX_GPT4;
@@ -791,25 +728,21 @@ u32 test_clk()
 	sr32(&prcm_base->clksel_per, 1, 1, 0x0);	// GPT3 = sys 32k /
 
 	writel(0, &gpt4_base->tldr);			// start counting at 0
-	writel(0, &gpt4_base->tcrr);			//set GPT4 to 0
+	writel(0, &gpt4_base->tcrr);			// set GPT4 to 0
 	writel(0, &gpt3_base->tldr);			// start counting at 0
-	writel(0, &gpt3_base->tcrr);			//set GPT3 to 0
+	writel(0, &gpt3_base->tcrr);			// set GPT3 to 0
 
-	writel(0x3, &gpt3_base->tclr);		// enable clock - START GPT3
-	writel(0x3, &gpt4_base->tclr);		// enable clock - START GPT4
+	writel(0x3, &gpt3_base->tclr);			// enable clock - START GPT3
+	writel(0x3, &gpt4_base->tclr);			// enable clock - START GPT4
 
-	for(i = 0; i < 10; i++)
-	{
-		while(readl(&gpt3_base->tcrr) < 32768);
+	while(readl(&gpt3_base->tcrr) < 327680);
 
-		count2 += readl(&gpt4_base->tcrr);
+	count = readl(&gpt4_base->tcrr);
 
-		writel(0, &gpt4_base->tcrr);			//set GPT4 to 0
-		writel(0, &gpt3_base->tcrr);			//set GPT3 to 0
-	}
+	writel(0, &gpt4_base->tclr);			// STOP GPT4
+	writel(0, &gpt3_base->tclr);			// STOP GPT3
+	writel(0, &gpt4_base->tcrr);			// set GPT4 to 0
+	writel(0, &gpt3_base->tcrr);			// set GPT3 to 0
 
-	writel(0, &gpt4_base->tclr);		//STOP GPT4
-	writel(0, &gpt3_base->tclr);		//STOP GPT3
-
-	return count2;
+	return count;
 }

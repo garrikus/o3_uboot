@@ -985,12 +985,12 @@ U_BOOT_CMD(
 
 int do_test_freq(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
-	puts("Wait for test a few second ...\n");
+	puts("\nWait for test a few second ...\n");
 	u32 count = test_clk();
 
 	if(count > 259948000 && count < 260052000) 	printf("\n>TEST OK\r\n");
 	else						printf("\n>TEST ERROR\r\n");
-//printf("\n>i = %d\r\n", count);
+//printf("\n>count = %d\r\n", count);
 	return 0;
 }
 
