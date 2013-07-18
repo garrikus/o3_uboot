@@ -1002,7 +1002,14 @@ U_BOOT_CMD(
 
 int do_test_runlin(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
-    
+	char* s = getenv("nandargs");
+
+	strcat(s, " o2testmode\0");
+
+	const char str[strlen(s)];	//without this the string 's' is incorrect in 'setenv()'!
+
+	strcpy(str, s);
+	setenv("nandargs", str);
 	printf("\n>TEST DONE\n");
 
 	return 0;
