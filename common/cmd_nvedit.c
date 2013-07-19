@@ -55,6 +55,10 @@
 #include <net.h>
 #endif
 
+#ifdef CONFIG_SYS_HUSH_PARSER
+#include <hush.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #if !defined(CONFIG_ENV_IS_IN_EEPROM)	&& \
@@ -1011,6 +1015,8 @@ int do_test_runlin(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	strcpy(str, s);
 	setenv("nandargs", str);
 	printf("\n>TEST DONE\n");
+
+	parse_string_outer(getenv("bootcmd"), FLAG_PARSE_SEMICOLON | FLAG_EXIT_FROM_LOOP);
 
 	return 0;
 }
