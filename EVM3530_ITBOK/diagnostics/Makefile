@@ -2,8 +2,7 @@
 #
 # Copyright Mistral software Pvt. Ltd.
 #
-# 
-
+#
 
 include $(TOPDIR)/config.mk
 
@@ -20,7 +19,6 @@ all: $(LIB)
 	$(AR) crv $(LIB) $(OBJS)
 
 $(LIB): .depend $(OBJS)
-	
 
 .depend:	Makefile $(AOBJS:.o=.S) $(COBJS:.o=.c)
 	$(CC) -M $(CFLAGS) $(AOBJS:.o=.S) $(COBJS:.o=.c) > $@

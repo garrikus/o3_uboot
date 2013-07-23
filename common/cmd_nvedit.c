@@ -55,10 +55,6 @@
 #include <net.h>
 #endif
 
-#ifdef CONFIG_SYS_HUSH_PARSER
-#include <hush.h>
-#endif
-
 DECLARE_GLOBAL_DATA_PTR;
 
 #if !defined(CONFIG_ENV_IS_IN_EEPROM)	&& \
@@ -687,7 +683,7 @@ U_BOOT_CMD(
 	"    - run the commands in the environment variable(s) 'var'"
 );
 #endif
-
+/*
 int do_test_ram(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
     sdram_test();
@@ -713,13 +709,13 @@ int do_test_pwr(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
     //	VMPU	1.2 V
     
     //	VCORE	1.2 V
-/*    
+    
     //	VIO	1.8 V
-	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VDAC_DEDICATED,	//	0X99
-				TWL4030_PM_RECEIVER_VIO_VSEL,		//	0XAF
-				TWL4030_PM_RECEIVER_VIO_DEV_GRP,	//	0XA6
-				TWL4030_PM_RECEIVER_DEV_GRP_P1);	//	0X20
-*/
+//	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VDAC_DEDICATED,	//	0X99
+//				TWL4030_PM_RECEIVER_VIO_VSEL,		//	0XAF
+//				TWL4030_PM_RECEIVER_VIO_DEV_GRP,	//	0XA6
+//				TWL4030_PM_RECEIVER_DEV_GRP_P1);	//	0X20
+
 
     //	VAUX1	3.0 V
 	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX1_DEDICATED,	//	0X75
@@ -941,39 +937,39 @@ int do_test_pwr(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 				0x04,//TWL4030_PM_RECEIVER_VAUX1_VSEL_30,
 				TWL4030_PM_RECEIVER_VAUX1_DEV_GRP,	//	0X72
 				0);	//	0X20
-/*
-	twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
-			    &val1,
-			    TWL4030_PM_RECEIVER_VAUX1_DEV_GRP);
-        twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
-    			    &val2,
-			    TWL4030_PM_RECEIVER_VAUX1_DEDICATED);
 
-	if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
-		val2 == 0x04))
-						    printf("No VAUX1 active.\n");
-	else
-    						    printf("Active VAUX1 found.\n");
-*/
+//	twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+//			    &val1,
+//			    TWL4030_PM_RECEIVER_VAUX1_DEV_GRP);
+//        twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+//    			    &val2,
+//			    TWL4030_PM_RECEIVER_VAUX1_DEDICATED);
+
+//	if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+//		val2 == 0x04))
+//						    printf("No VAUX1 active.\n");
+//	else
+//    						    printf("Active VAUX1 found.\n");
+
 	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX3_DEDICATED,
 				TWL4030_PM_RECEIVER_VAUX3_VSEL_28,
 				TWL4030_PM_RECEIVER_VAUX3_DEV_GRP,
 				0);
-/*
-	twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
-			    &val1,
-        		    TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
 
-        twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
-    			     &val2,
-        		    TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+//	twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+//			    &val1,
+//        		    TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
 
-	if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
-		val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
-						    printf("No VAUX3 active.\n");
-	else
-    						    printf("Active VAUX3 found.\n");
-*/
+//        twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER,
+//    			     &val2,
+//        		    TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+
+//	if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+//		val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
+//						    printf("No VAUX3 active.\n");
+//	else
+//    						    printf("Active VAUX3 found.\n");
+
 
 	if(!i) printf("\n>TEST DONE\r\n\n");
 	else  printf("\nAny sources is not found... Try again!\r\n\n");
@@ -1026,3 +1022,4 @@ U_BOOT_CMD(
 	"boot Linux in test mode",
 	""
 );
+*/

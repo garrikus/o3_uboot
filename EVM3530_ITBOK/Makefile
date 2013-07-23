@@ -2,17 +2,14 @@
 #
 # Copyright Mistral software Pvt. Ltd.
 #
-# 
-
+#
 
 #include $(TOPDIR)/config.mk
 
 LIB = $(BUILD_DIR)/EVM3530_ITBOK/libitbok.a
 
-#LIB_DRIVERS = drivers/
 LIB_DIAGS = diagnostics/
 
 all: $(LIB_DIAGS) 
-#	$(MAKE) -C $(LIB_DRIVERS) 
 	$(MAKE) -C $(LIB_DIAGS)
 	$(AR) crv $(LIB) `find . -name *.o`

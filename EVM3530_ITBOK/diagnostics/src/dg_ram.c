@@ -38,13 +38,12 @@
 #include <dg_memory.h>
 #include <omap3530evm.h>
 
-//#if 0
-//#define TEST_START_ADDR         0x81800000
-//#define TEST_END_ADDR 	        0x87FFFFFF
-#define TEST_END_ADDR 	      0x8FE3FC4F // 0x8FE3F800
-//#endif
+#if 0
+#define TEST_START_ADDR         0x81800000
+#define TEST_END_ADDR 	        0x87FFFFFF
+#endif
 #define TEST_START_ADDR         0x80000000
-//#define TEST_END_ADDR 	        0x8FE7FFFF
+#define TEST_END_ADDR 	        0x8FE7FFFF
 #define TEST_DATA1		0x55
 #define TEST_DATA2		0xAA
 #define OK 	0
@@ -117,12 +116,8 @@ void sdram_test(void)
 	REG_U8 *end_addr = (REG_U8 *) TEST_END_ADDR;
 	u32 nBytes = ((u32) end_addr - (u32) base_addr);
 
-	printf("\nSDRAM Start address 0x%x, End address 0x%x\n\n", (unsigned int)base_addr, (unsigned int)end_addr);
-//	test_sdram((REG_U8 *) base_addr, nBytes);
-	if(test_sdram((REG_U8 *) base_addr, nBytes) == SUCCESS)
-							printf(">TEST OK\r\n\n");
-	else
-							printf(">TEST ERROR\r\n\n");
+	printf("SDRAM Start address 0x%x, End address 0x%x\n", (unsigned int)base_addr, (unsigned int)end_addr);
+	test_sdram((REG_U8 *) base_addr, nBytes);
 }
 
 void testTaskEntry(UINT32 u32TaskMemBytes, UINT32 u32TaskStartAddress, UINT32 u32MaxIters)
@@ -464,9 +459,7 @@ S32 test_sdram(REG_U8 * baseAddress, u32 nBytes)
     u32 loopCount = 0;
 
 
-//loop20:
-
-//for(;loopCount < 2; loopCount++) {
+loop20:
     test_status = SUCCESS;
     p_test_status = SUCCESS;
 	/*
@@ -622,10 +615,10 @@ S32 test_sdram(REG_U8 * baseAddress, u32 nBytes)
 
 	printf("SDRAM Test Completed... %s\n", ((FAILURE != test_status) ? "PASS" : "FAIL"));
     printf("=========== EO #%02d ===========\n\n", loopCount);
-//    loopCount++;
-//}
-//    if (loopCount < 3)//20)
-//        goto loop20;
+    loopCount++;
+
+//    if (loopCount < 20)	//1
+//        goto loop20;		//2
 
 	return test_status;
 }

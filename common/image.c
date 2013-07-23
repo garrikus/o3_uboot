@@ -171,6 +171,7 @@ int image_check_hcrc (const image_header_t *hdr)
 	/* Copy header so we can blank CRC field for re-calculation */
 	memmove (&header, (char *)hdr, image_get_header_size ());
 	image_set_hcrc (&header, 0);
+
 	hcrc = crc32 (0, (unsigned char *)&header, len);
 
 	return (hcrc == image_get_hcrc (hdr));

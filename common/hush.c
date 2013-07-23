@@ -1704,27 +1704,9 @@ static int run_pipe_real(struct pipe *pi)
 				rcode = x->function(child);
 #else
 				/* OK - call function to do the command */
-//1-----------------------------------------------------------------------------------------------------
-	static int flag_for_test = 0;
-
-	extern int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
-	extern int do_bootm_for_test (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
-	extern int do_test_nand (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
-
-	if(cmdtp->cmd == do_test_nand) flag_for_test = 1;
-	
-	if(flag_for_test && cmdtp->cmd == do_bootm)
-	{
-		flag_for_test = 0;
-		cmdtp->cmd = do_bootm_for_test;
-	}
-//2-----------------------------------------------------------------------------------------------------
 			rcode = (cmdtp->cmd)
 					(cmdtp, flag,child->argc-i,&child->argv[i]);
-//1-----------------------------------------------------------------------------------------------------
-	if(cmdtp->cmd == do_bootm_for_test)
-				cmdtp->cmd = do_bootm;
-//2-----------------------------------------------------------------------------------------------------
+
 				if ( !cmdtp->repeatable )
 					flag_repeat = 0;
 
@@ -3653,6 +3635,3 @@ U_BOOT_CMD(
 
 #endif
 /****************************************************************************/
-
-
-

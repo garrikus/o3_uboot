@@ -791,7 +791,7 @@ int usb_new_device(struct usb_device *dev)
 	dev->epmaxpacketin[0] = 8;
 	dev->epmaxpacketout[0] = 8;
 
-
+/*
 dev->descriptor.bLength = 18;
 dev->descriptor.bDescriptorType = 1;
 dev->descriptor.bcdUSB = 2;
@@ -805,7 +805,7 @@ dev->descriptor.iManufacturer = 1;
 dev->descriptor.iProduct = 2;
 dev->descriptor.iSerialNumber = 0;
 dev->descriptor.bNumConfigurations = 1;
-
+*/
 
 	err = usb_get_descriptor(dev, USB_DT_DEVICE, 0, &dev->descriptor, 8);
 	if (err < 8) {
@@ -831,7 +831,7 @@ dev->descriptor.bNumConfigurations = 1;
 	 * the maxpacket size is 8 or 16 the device may be waiting to transmit
 	 * some more, or keeps on retransmitting the 8 byte header. */
 
-
+/*
 dev->descriptor.bLength = 18;
 dev->descriptor.bDescriptorType = 1;
 dev->descriptor.bcdUSB = 2;
@@ -845,7 +845,7 @@ dev->descriptor.iManufacturer = 1;
 dev->descriptor.iProduct = 2;
 dev->descriptor.iSerialNumber = 0;
 dev->descriptor.bNumConfigurations = 1;
-
+*/
 
 	desc = (struct usb_device_descriptor *)tmpbuf;
 	dev->descriptor.bMaxPacketSize0 = 64;	    /* Start off at 64 bytes  */
