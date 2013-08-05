@@ -6,7 +6,11 @@
 
 #include $(TOPDIR)/config.mk
 
-LIB = $(BUILD_DIR)/EVM3530_ITBOK/libitbok.a
+ifeq ($(BUILD_DIR),)
+    LIB = libitbok.a
+else
+    LIB = $(BUILD_DIR)/EVM3530_ITBOK/libitbok.a
+endif
 
 LIB_DIAGS = diagnostics/
 
