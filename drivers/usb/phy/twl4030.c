@@ -187,3 +187,4 @@ int twl4030_usb_ulpi_init(void)
 
 	return 0;
 }
+

@@ -1704,12 +1704,11 @@ static int run_pipe_real(struct pipe *pi)
 				rcode = x->function(child);
 #else
 				/* OK - call function to do the command */
+			rcode = (cmdtp->cmd)
+					(cmdtp, flag,child->argc-i,&child->argv[i]);
 
-				rcode = (cmdtp->cmd)
-(cmdtp, flag,child->argc-i,&child->argv[i]);
 				if ( !cmdtp->repeatable )
 					flag_repeat = 0;
-
 
 #endif
 				child->argv-=i;  /* XXX restore hack so free() can work right */

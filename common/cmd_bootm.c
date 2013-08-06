@@ -867,6 +867,7 @@ static void *boot_get_kernel (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]
 		printf ("## Booting kernel from Legacy Image at %08lx ...\n",
 				img_addr);
 		hdr = image_get_kernel (img_addr, images->verify);
+
 		if (!hdr)
 			return NULL;
 		show_boot_progress (5);
@@ -1468,3 +1469,9 @@ static int do_bootm_integrity (int flag, int argc, char *argv[],
 	return 1;
 }
 #endif
+
+int check_kernel_img(void)
+{
+	if(image_get_kernel(0x82000000, 1) != NULL) return 1;
+	else return 0;
+}

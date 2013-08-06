@@ -84,7 +84,6 @@ int board_init(void)
 
 static void vaux4_on()
 {
-
     unsigned char byte;
 
     void * pcio1 = (void *)0x48002448;
@@ -106,7 +105,6 @@ static void vaux4_on()
 
 
     printf(" done.\n");
-
 }
 
 extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
@@ -115,7 +113,6 @@ static void dsi_tmp_reset_fix()
     /* Check if we have VAUX3 pwr running */
 
     u8 byte, val1, val2;
-    int reset_flag = 0;
 
     twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val1,
             TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
@@ -143,6 +140,144 @@ static void dsi_tmp_reset_fix()
         printf("Active VAUX3 found. Go ahead.\n");
 }
 
+//#define I2C_ACCUM_DEBUG
+
+static inline void shutdown()
+{
+    i2c_set_bus_num(0);
+
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P2_SW_EVENTS);
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P3_SW_EVENTS);
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P1_SW_EVENTS);
+}
+
+
+static void check_accum()
+{
+#ifdef I2C_ACCUM_DEBUG
+	printf("\n   =========================================================================================	\n\n");
+#endif
+
+	if(i2c_get_bus_num() != 2 && i2c_set_bus_num(2) < 0)
+	{
+	    udelay (1000);
+	    
+	    if(i2c_set_bus_num(2) < 0)
+		    printf("\nAccess to I2C num 2 failed!\n");
+	}
+
+	if(i2c_get_bus_num() == 2)
+	{
+#ifdef I2C_ACCUM_DEBUG
+	    printf("Current I2C bus num is 2\n");
+#endif
+	    int error;
+
+	    if(!i2c_probe (0x55))
+	    {
+		uchar volt1, volt2;
+		uint  voltage = 0;
+		int i;
+
+		for(i = 0; i < 3; i++)
+		{
+		    if(!(error = smb_read(0x55, 0x09, &volt1)))
+		    {
+			voltage += (uint)volt1;
+			voltage <<= 8;
+			break;
+		    }
+		    else udelay (1000 + i * 10000);
+		}
+
+		for(i = 0; i < 3; i++)
+		{
+		    if(!(error = smb_read(0x55, 0x08, &volt2)))
+		    {
+			voltage |= (uint)volt2;
+			break;
+		    }
+		    else udelay (1000 + i * 10000);
+		}
+#ifdef I2C_ACCUM_DEBUG
+		printf("VALUE OF VOLTAGE ACCUM IS %d.%d V or 0x%02x\n", voltage/1000, voltage%1000, voltage);
+#else
+		printf("VALUE OF VOLTAGE ACCUM IS %d.%d V\n", voltage/1000, voltage%1000);
+#endif
+
+		if(voltage <= 3200)
+		{
+		    printf("\tRequires charging...\n");
+		
+		    if(!i2c_probe (0x09))
+		    {
+			uchar value;
+			
+			for(i = 0; i < 3; i++)
+			{
+			    if(!(error = smb_read(0x09, 0x04, &value)))
+								    break;
+			    else udelay (1000 + i * 10000);
+			}
+#ifdef I2C_ACCUM_DEBUG
+			printf("Value of register4 is = 0x%02x =\n", value);
+#endif
+			
+			if(!error)
+			{
+			    if(value & 0xC0)
+			    {
+				error = smb_write (0x09, 0x02, 0xFF);
+#ifdef I2C_ACCUM_DEBUG
+				if(!error)
+				     printf("REG2 was written\n");
+				else printf("REG2 isn't written... ERROR = %d\n", error);
+
+				if(!(error = smb_read(0x09, 0x02, &value)))
+				     printf("Value of register2 is = 0x%02x =\n", value);
+				else printf("register2 test of CHGR FAILED... ERROR = %d\n", error);
+#endif
+				error = smb_write (0x09, 0x01, 0xAF);
+#ifdef I2C_ACCUM_DEBUG
+				if(!error)
+				     printf("REG1 was written\n");
+				else printf("REG1 isn't written... ERROR = %d\n", error);
+
+				if(!(error = smb_read(0x09, 0x01, &value)))
+				     printf("Value of register1 is = 0x%02x =\n", value);
+				else printf("register1 test of CHGR FAILED... ERROR = %d\n", error);
+#endif
+				error = smb_write (0x09, 0x00, 0x61);
+#ifdef I2C_ACCUM_DEBUG
+				if(!error)
+				     printf("REG0 was written\n");
+				else printf("REG0 isn't written... ERROR = %d\n", error);
+
+				if(!(error = smb_read(0x09, 0x00, &value)))
+				     printf("Value of register0 is = 0x%02x =\n", value);
+				else printf("register0 test of CHGR FAILED... ERROR = %d\n", error);
+#endif
+			    }
+			    else
+			    {
+                    printf("\nSHUTDOWN!\n");
+                    shutdown();
+			    }
+			}
+			else printf("REG4 test of CHGR FAILED... ERROR = %d\n", error);
+		    }
+		    else printf("I2C TEST CHRG-CONTROLLER FAILED...\n");
+		}
+	    }
+	    else printf("I2C TEST FG FAILED...\n");
+	}
+	
+	if(i2c_get_bus_num()) i2c_set_bus_num(0);
+#ifdef I2C_ACCUM_DEBUG
+	printf("\n   =========================================================================================\n\n");
+#endif
+}
+
 /*
  * Routine: misc_init_r
  * Description: Init ethernet (done here so udelay works)
@@ -158,8 +293,10 @@ int misc_init_r(void)
      * garbage. The culprit is TBFound.
      */
     vaux4_on();
-	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+    i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 #endif
+
+    check_accum();
 
 #if defined(CONFIG_CMD_NET)
 	setup_net_chip();

@@ -128,7 +128,7 @@ void i2c_init (int speed, int slaveadd)
 	bus_initialized[current_bus] = 1;
 }
 
-static int i2c_read_byte (u8 devaddr, u8 regoffset, u8 * value)
+static int i2c_read_byte (u8 devaddr, u8 regoffset, u8* value)
 {
 	int i2c_error = 0;
 	u16 status;
@@ -436,7 +436,20 @@ int i2c_set_bus_num(unsigned int bus)
 	return 0;
 }
 
-unsigned int i2c_get_bus_num(voif)
+unsigned int i2c_get_bus_num(void)
 {
     return current_bus;
+}
+
+/* FIXME: Shouldn't we use i2_reg_read() and i2c_reg_write
+ *        instead of these
+ */
+int smb_write (u8 devaddr, u8 regoffset, u8 value)
+{
+    return i2c_write_byte(devaddr, regoffset, value);
+}
+
+int smb_read (u8 devaddr, u8 regoffset, u8 * value)
+{
+    return i2c_read_byte(devaddr, regoffset, value);
 }

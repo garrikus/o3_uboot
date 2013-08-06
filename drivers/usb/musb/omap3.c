@@ -88,6 +88,8 @@ static void musb_db_otg_regs(void)
 }
 #endif
 
+#define CONFIG_TWL4030_USB
+
 int musb_platform_init(void)
 {
 	int ret = -1;
