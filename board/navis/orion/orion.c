@@ -140,6 +140,63 @@ static void dsi_tmp_reset_fix()
         printf("Active VAUX3 found. Go ahead.\n");
 }
 
+static void set_picture_to_display(void)
+{
+    frame_reset();
+
+    int n[6][12] = {
+            {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1},
+            {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1},
+            {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1},
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1},
+            {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1}
+        },
+        a[6][12] = {
+		{0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0},
+    		{1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0},
+    		{0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0},
+    		{0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0},
+    		{1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0},
+    		{0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1}
+    	},
+    	b[6][12] = {
+		{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0},
+    		{1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0},
+    		{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0},
+    		{1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0},
+    		{1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0},
+    		{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0}
+    	},
+    	i[6][12] = {
+		{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1},
+    		{1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1},
+    		{1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1},
+    		{1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1},
+    		{1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1},
+    		{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1}
+    	},
+    	c[6][12] = {
+		{0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0},
+    		{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1},
+    		{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    		{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    		{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1},
+    		{0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0}
+    	};
+
+    char_to_frame(130, 50, &n[0][0], 6, 12);
+    char_to_frame(145, 50, &a[0][0], 6, 12);
+    char_to_frame(160, 50, &b[0][0], 6, 12);
+    char_to_frame(175, 50, &i[0][0], 6, 12);
+    char_to_frame(190, 50, &c[0][0], 6, 12);
+
+    udelay(5000);
+
+    panel_init();
+    panel_update();
+}
+
 //#define I2C_ACCUM_DEBUG
 
 static inline void shutdown()
@@ -154,10 +211,6 @@ static inline void shutdown()
 
 static void check_accum()
 {
-#ifdef I2C_ACCUM_DEBUG
-	printf("\n   =========================================================================================	\n\n");
-#endif
-
 	if(i2c_get_bus_num() != 2 && i2c_set_bus_num(2) < 0)
 	{
 	    udelay (1000);
@@ -260,8 +313,8 @@ static void check_accum()
 			    }
 			    else
 			    {
-                    printf("\nSHUTDOWN!\n");
-                    shutdown();
+                		printf("\nSHUTDOWN!\n");
+                		shutdown();
 			    }
 			}
 			else printf("REG4 test of CHGR FAILED... ERROR = %d\n", error);
@@ -273,9 +326,6 @@ static void check_accum()
 	}
 	
 	if(i2c_get_bus_num()) i2c_set_bus_num(0);
-#ifdef I2C_ACCUM_DEBUG
-	printf("\n   =========================================================================================\n\n");
-#endif
 }
 
 /*
@@ -286,6 +336,8 @@ int misc_init_r(void)
 {
 #ifdef CONFIG_DRIVER_OMAP34XX_I2C
     dsi_tmp_reset_fix();
+    set_picture_to_display();
+
     /*
      * We have to enable this VAUX4 LDO since there's a buggy chip
      * in i2c-2 on this board that needs this power.
