@@ -118,29 +118,273 @@ int dss_reset(void)
     return 0;
 }
 
+static void set_lcd_display_type(lcd_display_type type)
+{
+    int mode;
+    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
+
+    switch(type) {
+        case LCD_DISPLAY_STN:
+                mode = 0;
+                break;
+
+        case LCD_DISPLAY_TFT:
+                mode = 1;
+                break;
+
+        default:
+//                BUG();
+                return;
+    }
+
+//        enable_clocks(1);
+//        REG_FLD_MOD(DISPC_CONTROL, mode, 3, 3);
+    r32setv(&dispc->control, 3, 1, (u32)mode);
+//        enable_clocks(0);
+}
+
+static void set_parallel_interface_mode(parallel_interface_mode mode)
+{
+    u32 value;
+    int stallmode;
+    int gpout0 = 1;
+    int gpout1;
+    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
+
+    switch(mode) { 
+        case PARALLELMODE_BYPASS:
+                stallmode = 0; 
+                gpout1 = 1; 
+                break;  
+
+        case PARALLELMODE_RFBI:
+                stallmode = 1;
+                gpout1 = 0;
+                break;
+
+        case PARALLELMODE_DSI:
+                stallmode = 1;
+                gpout1 = 1;
+                break;
+
+        default:
+//                BUG();
+                return;
+    }
+
+//    enable_clocks(1);
+
+    value = readl(&dispc->control);
+
+    setv32(&value, 11, 1, stallmode);
+    setv32(&value, 15, 1, gpout0);
+    setv32(&value, 16, 1, gpout1);
+
+    writel(value, &dispc->control);
+//    enable_clocks(0);
+}
+
+static void set_fifohandcheck(int enable)
+{
+    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
+//    enable_clocks(1);
+    r32setv(&dispc->control, 16, 1, enable);
+//    enable_clocks(0);
+}
+
+static void set_tft_data_lines(u8 data_lines)
+{
+    int code;
+    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
+
+    switch(data_lines) {
+        case 12:
+                code = 0;
+                break;  
+        case 16:        
+                code = 1;
+                break;
+        case 18:
+                code = 2;
+                break;
+        case 24:
+                code = 3;
+                break;
+        default:
+//                BUG();
+                return;
+    }
+
+//    enable_clocks(1);
+    r32setv(&dispc->control, 9, 2, code);
+//    enable_clocks(0);
+}
+
+#define cpu_is_omap24xx()               0
+
+
+static int is_lcd_timings_error(int hsw, int hfp, int hbp,
+            			int vsw, int vfp, int vbp)
+{
+    if (cpu_is_omap24xx()/* || omap_rev() < OMAP3430_REV_ES3_0*/) {
+                if (hsw < 1 || hsw > 64  ||
+                    hfp < 1 || hfp > 256 ||
+                    hbp < 1 || hbp > 256 ||
+                    vsw < 1 || vsw > 64  ||
+                    vfp < 0 || vfp > 255 ||
+                    vbp < 0 || vbp > 255)
+            			            return 1;
+    } else {
+                if (hsw < 1 || hsw > 256  ||
+                    hfp < 1 || hfp > 4096 ||
+                    hbp < 1 || hbp > 4096 ||
+                    vsw < 1 || vsw > 256  ||
+                    vfp < 0 || vfp > 4095 ||
+                    vbp < 0 || vbp > 4095)
+		                            return 1;
+    }
+
+    return 0;
+}
+
+//setvalue(u32 source, u8 offset, u8 count, u32 data)
+
+static void set_timings(int hsw, int hfp, int hbp,
+                            int vsw, int vfp, int vbp)
+{
+    u32 timing_h, timing_v;
+    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
+
+    if (cpu_is_omap24xx()/* || omap_rev() < OMAP3430_REV_ES3_0*/) {
+                setv32(&timing_h, 5, 6,  hsw-1);
+		setv32(&timing_h, 15, 8, hfp-1);
+		setv32(&timing_h, 27, 8, hbp-1);
+
+		setv32(&timing_v, 5, 6,  vsw-1);
+		setv32(&timing_h, 15, 8, vfp-1);
+                setv32(&timing_h, 27, 8, vbp-1);
+    } else {
+    		setv32(&timing_h, 7, 8,   hsw-1);
+		setv32(&timing_h, 19, 12, hfp-1);
+		setv32(&timing_h, 31, 12, hbp-1);
+
+		setv32(&timing_v, 7, 8,   vsw-1);
+		setv32(&timing_h, 19, 12, vfp-1);
+		setv32(&timing_h, 31, 12, vbp-1);
+    }
+
+//    enable_clocks(1);
+    writel(timing_h, &dispc->timing_h);
+    writel(timing_v, &dispc->timing_v);
+//    enable_clocks(0);
+}
+
+static void set_lcd_size(u16 width, u16 height)
+{
+    if((width > (1 << 11)) || (height > (1 << 11))) {
+				dsserr("wrong lcd size!");
+				return;
+    }
+
+    u32 val;
+    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
+
+    setv32(&val, 26, 11, height - 1);
+    setv32(&val, 10, 11, width  - 1);
+//    enable_clocks(1);
+//    dispc_write_reg(DISPC_SIZE_LCD, val);
+    writel(val, &dispc->size_lcd);
+//    enable_clocks(0);
+}
+
+static void set_lcd_timings(struct orion_video_timings *timings)
+{
+    unsigned xtot, ytot;
+    unsigned long ht, vt;
+
+    if(is_lcd_timings_error(timings->hsw, timings->hfp,
+                            timings->hbp, timings->vsw,
+                            timings->vfp, timings->vbp)) {
+//                BUG();
+				dsserr("wrong timings!");
+				return;
+    }
+
+    set_timings(timings->hsw, timings->hfp, timings->hbp,
+    		timings->vsw, timings->vfp, timings->vbp);
+
+    set_lcd_size(timings->x_res, timings->y_res);
+/*
+    xtot = timings->x_res + timings->hfp + timings->hsw + timings->hbp;
+    ytot = timings->y_res + timings->vfp + timings->vsw + timings->vbp;
+
+    ht = (timings->pixel_clock * 1000) / xtot;
+    vt = (timings->pixel_clock * 1000) / xtot / ytot;
+
+        DSSDBG("xres %u yres %u\n", timings->x_res, timings->y_res);
+        DSSDBG("pck %u\n", timings->pixel_clock);
+        DSSDBG("hsw %d hfp %d hbp %d vsw %d vfp %d vbp %d\n",
+                        timings->hsw, timings->hfp, timings->hbp,
+                        timings->vsw, timings->vfp, timings->vbp);
+
+        DSSDBG("hsync %luHz, vsync %luHz\n", ht, vt);
+*/
+}
+
+int init_dispc(void)
+{
+//    omap_dispc_register_isr(dsi_framedone_irq_callback, NULL,
+//                            DISPC_IRQ_FRAMEDONE);
+
+    set_lcd_display_type(LCD_DISPLAY_TFT);
+    set_parallel_interface_mode(PARALLELMODE_DSI);
+    set_fifohandcheck(ENABLE);
+    set_tft_data_lines(24);
+
+    {
+        struct orion_video_timings timings = {
+		.x_res		= 480,
+		.y_res		= 800,
+                .hsw            = 1,
+                .hfp            = 1,
+                .hbp            = 1,
+                .vsw            = 1,
+                .vfp            = 0,
+                .vbp            = 0,
+        };
+
+        set_lcd_timings(&timings);
+    }
+
+    dssmsg(" DISPC init done........................... ok");
+
+    return 0;
+}
+
+/*
 void display_init_dispc(void)
 {
 //    u32 val = 0;
     struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
-/*
-    writel(0x2, &dispc->sysconfig);
 
-    if(wait_for_bit(&dispc->sysstatus, 0, 1, 1, 100000)) {
-				dsserr("DISPC reset is not completed!");
-				return;
-    }
-*/
+//    writel(0x2, &dispc->sysconfig);
+//
+//    if(wait_for_bit(&dispc->sysstatus, 0, 1, 1, 100000)) {
+//				dsserr("DISPC reset is not completed!");
+//				return;
+//    }
+
 
 //    r32setv(&dispc->control, 5, 1, 1);
 
     writel(1, &dispc->sysconfig);		//Automatic L3 and L4 interface clock gating 
-    						//strategy is applied based on interface activity.
+    						//	strategy is applied based on interface activity.
     r32setv(&dispc->sysconfig, 2, 1, 1);	//Wakeup is enabled.
     r32setv(&dispc->sysconfig, 4, 2, 2);	//Smart idle.
     r32setv(&dispc->sysconfig, 13, 2, 2);	//Smart Standby.
                 
     writel(0x1ffff, &dispc->irqstatus);		//Reset all events
-    writel(0/*0xd64f*/, &dispc->irqenable);	//Enable interrupt
+    writel(0xd64f, &dispc->irqenable);	//Enable interrupt
     
 //      Color depth 24 bit
     r32setv(&dispc->control, 9, 2, 3);
@@ -166,7 +410,7 @@ void display_init_dispc(void)
 
     dssmsg(" DISPC init done........................... ok");
 }
-
+*/
 int dsi_reset(void)
 {
     u32 val = 0;

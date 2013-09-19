@@ -382,24 +382,31 @@ display = {
 */
 
 
-typedef enum {
-	color_depth_12_bit,
-	color_depth_16_bit,
-	color_depth_18_bit,
-	color_depth_24_bit
-} tftdatalines;		//Number of lines of the LCD interface
 
-
-
-struct orion_display {
-	tftdatalines color_depth;
-} display;
 
 
 
 //DISPC
 
-struct omap_video_timings {
+typedef enum {
+	color_depth_12_bit,
+	color_depth_16_bit,
+	color_depth_18_bit,
+	color_depth_24_bit
+} tftdatalines;				//Number of lines of the LCD interface
+
+typedef enum {
+	LCD_DISPLAY_STN,
+	LCD_DISPLAY_TFT,
+} lcd_display_type;
+
+typedef enum {
+        PARALLELMODE_BYPASS,           /* MIPI DPI */
+        PARALLELMODE_RFBI,             /* MIPI DBI */
+        PARALLELMODE_DSI,
+} parallel_interface_mode;
+
+struct orion_video_timings {
 	/* Unit: pixels */
 	u16 x_res;
 	/* Unit: pixels */
@@ -421,12 +428,14 @@ struct omap_video_timings {
 };
 
 
-typedef enum {
-	OMAP_DSS_LCD_DISPLAY_STN,
-	OMAP_DSS_LCD_DISPLAY_TFT,
-} lcd_display_type;
 
 
+struct orion_display {
+	struct display_controller_registers* dispc;
+	tftdatalines            color_depth;
+	lcd_display_type        display_type;
+	parallel_interface_mode interface_mode;
+};
 
 
 typedef enum {

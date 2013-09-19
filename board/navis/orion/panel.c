@@ -72,6 +72,31 @@ void panel_backlight(int state)
 	stop_timer(tm);
 }
 
+int orion_display_enable(void)
+{
+    if(dss_reset()) {
+                dsserr("DSS reset sequence is not completed");
+                return 1;
+    } //else
+//      dssmsg("DSS reset sequence is complete... ok");
+
+//    display_init_dispc();
+    init_dispc();
+
+    if(dsi_reset()) {
+                dsserr("DSI softreset failed!");
+                return 1;
+    } //else
+//      dssmsg("The softreset DSI completed... ok");
+
+    if(display_init_dsi()) {
+                dsserr("DSI init failed!");
+                return 1;
+    }
+
+    return 0;
+}
+
 int panel_init(void)
 {
 // common setting //
@@ -100,13 +125,16 @@ int panel_init(void)
             0x4E, 0x57, 0x75
     };
 
+    orion_display_enable();
+/*
     if(dss_reset()) {
                 dsserr("DSS reset sequence is not completed");
                 return 1;
     } //else
 //	dssmsg("DSS reset sequence is complete... ok");
 
-    display_init_dispc();
+//    display_init_dispc();
+    init_dispc();
 
     if(dsi_reset()) {
                 dsserr("DSI softreset failed!");
@@ -118,10 +146,10 @@ int panel_init(void)
 		dsserr("DSI init failed!");
                 return 1;
     }
-//    config_vc(0, l4_interconnect, command_mode, manual_bta, no_dma);
+*/
     enable_vc_irq(VC0, PACKET_SENT_IRQ, ENABLE);
     vc_enable_hs_mode(VC0, DISABLE);
-    
+
     if(vc_dcs_write(VC0, SETEXTC, sizeof(SETEXTC)))
     						return 1;
     if(vc_dcs_write(VC0, SETGIP, sizeof(SETGIP)))
@@ -133,7 +161,7 @@ int panel_init(void)
 						return 1;
 
     u8 command = SLEEP_OUT;
-    
+
     if(vc_dcs_write(VC0, &command, sizeof(command)))
     						return 1;
 //    udelay(120000);
