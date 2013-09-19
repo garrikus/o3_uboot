@@ -1,5 +1,5 @@
 #include "timers.h"
-#include "dss.h"
+#include "display.h"
 
 #define START_VMEM_ADDR         0x8fc00000
 #define VC0			0
@@ -18,7 +18,7 @@ void frame_reset(void)
       addr++;
     }
 }
-
+/*
 void set_line(const int x, int line, int* points, int len)
 {
     int offset,
@@ -53,7 +53,7 @@ void char_to_frame(const int x, int line, int* chr, int str_count, int pix_count
                 set_line(x, line++, p, pix_count);
     }
 }
-
+*/
 void panel_backlight(int state)
 {
     timer_t* tm = init_timer(gpt9);
@@ -121,14 +121,21 @@ int panel_init(void)
 //    config_vc(0, l4_interconnect, command_mode, manual_bta, no_dma);
     enable_vc_irq(VC0, PACKET_SENT_IRQ, ENABLE);
     vc_enable_hs_mode(VC0, DISABLE);
-    vc_dcs_write(VC0, SETEXTC, sizeof(SETEXTC)),
-    vc_dcs_write(VC0, SETGIP, sizeof(SETGIP)),
+    
+    if(vc_dcs_write(VC0, SETEXTC, sizeof(SETEXTC)))
+    						return 1;
+    if(vc_dcs_write(VC0, SETGIP, sizeof(SETGIP)))
+    						return 1;
 //    udelay(10000),
-    vc_dcs_write(VC0, SETTPSNR, sizeof(SETTPSNR)),
-    vc_dcs_write(VC0, SETMIPI, sizeof(SETMIPI));
+    if(vc_dcs_write(VC0, SETTPSNR, sizeof(SETTPSNR)))
+    						return 1;
+    if(vc_dcs_write(VC0, SETMIPI, sizeof(SETMIPI)))
+						return 1;
 
     u8 command = SLEEP_OUT;
-    vc_dcs_write(VC0, &command, sizeof(command));
+    
+    if(vc_dcs_write(VC0, &command, sizeof(command)))
+    						return 1;
 //    udelay(120000);
 /*
     u8 id1, id2, id3;
@@ -146,7 +153,9 @@ int panel_init(void)
     printf(" ID1 = 0x%x\n ID2 = 0x%x\n ID3 = 0x%x\n", id1, id2, id3);
 */
     command = DISPLAY_ON;
-    vc_dcs_write(VC0, &command, sizeof(command));
+    
+    if(vc_dcs_write(VC0, &command, sizeof(command)))
+    						return 1;
 
     enable_te(VC0, ENABLE);
     vc_enable_hs_mode(VC0, ENABLE);

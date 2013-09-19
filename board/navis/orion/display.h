@@ -382,6 +382,19 @@ display = {
 */
 
 
+typedef enum {
+	color_depth_12_bit,
+	color_depth_16_bit,
+	color_depth_18_bit,
+	color_depth_24_bit
+} tftdatalines;		//Number of lines of the LCD interface
+
+
+
+struct orion_display {
+	tftdatalines color_depth;
+} display;
+
 
 
 //DISPC
@@ -411,7 +424,7 @@ struct omap_video_timings {
 typedef enum {
 	OMAP_DSS_LCD_DISPLAY_STN,
 	OMAP_DSS_LCD_DISPLAY_TFT,
-} omap_lcd_display_type;
+} lcd_display_type;
 
 
 

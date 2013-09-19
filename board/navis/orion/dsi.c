@@ -1,6 +1,6 @@
 #include <asm/io.h>
 #include <asm/arch-omap3/sys_proto.h>
-#include "dss.h"
+#include "display.h"
 
 
 int vc_enable(const int, int);
@@ -286,7 +286,7 @@ int vc_send_bta(const int channel)
     udelay(500);
 
     if(wait_for_completion_bta_timeout(channel)) {
-                             dsserr("BTA was not received!");
+//                             dsserr("BTA was not received!");
                              return 1;
     }
 

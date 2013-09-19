@@ -1,6 +1,6 @@
 #include <asm/io.h>
 #include <asm/arch-omap3/sys_proto.h>
-#include "dss.h"
+#include "display.h"
 
 //#define DSS_DEBUG_OUTPUT
 #define DSS_ERROR_OUTPUT
@@ -133,13 +133,14 @@ void display_init_dispc(void)
 
 //    r32setv(&dispc->control, 5, 1, 1);
 
-    writel(1, &dispc->sysconfig);
-    r32setv(&dispc->sysconfig, 2, 1, 1);
-    r32setv(&dispc->sysconfig, 4, 2, 2);
-    r32setv(&dispc->sysconfig, 13, 2, 2);
+    writel(1, &dispc->sysconfig);		//Automatic L3 and L4 interface clock gating 
+    						//strategy is applied based on interface activity.
+    r32setv(&dispc->sysconfig, 2, 1, 1);	//Wakeup is enabled.
+    r32setv(&dispc->sysconfig, 4, 2, 2);	//Smart idle.
+    r32setv(&dispc->sysconfig, 13, 2, 2);	//Smart Standby.
                 
-    writel(0x1ffff, &dispc->irqstatus);
-    writel(0xd64f, &dispc->irqenable);
+    writel(0x1ffff, &dispc->irqstatus);		//Reset all events
+    writel(0/*0xd64f*/, &dispc->irqenable);	//Enable interrupt
     
 //      Color depth 24 bit
     r32setv(&dispc->control, 9, 2, 3);
