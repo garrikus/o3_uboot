@@ -72,8 +72,41 @@ void panel_backlight(int state)
 	stop_timer(tm);
 }
 
+struct orion_display display_get_device(int device)
+{
+    struct orion_display d;
+
+    if(device == 2) {
+		d.dispc          = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE,
+		d.color_depth    = color_depth_24_bit,
+		d.display_type   = LCD_DISPLAY_TFT,
+		d.interface_mode = PARALLELMODE_DSI;
+    }
+
+    return d;
+}
+
+#define FAIL		1
+#define ORION2		2
+
 int orion_display_enable(void)
 {
+    struct orion_display display;
+
+    display = display_get_device(ORION2);
+
+    if(display.dispc == NULL) {
+		dsserr("failed to start device!");
+		return 1;
+    }
+/*
+    struct orion_display d = {
+		.dispc          = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE,
+		.color_depth    = color_depth_24_bit,
+		.display_type   = LCD_DISPLAY_TFT,
+		.interface_mode = PARALLELMODE_DSI
+	};
+*/
     if(dss_reset()) {
                 dsserr("DSS reset sequence is not completed");
                 return 1;
@@ -81,7 +114,7 @@ int orion_display_enable(void)
 //      dssmsg("DSS reset sequence is complete... ok");
 
 //    display_init_dispc();
-    init_dispc();
+    init_dispc(&display);
 
     if(dsi_reset()) {
                 dsserr("DSI softreset failed!");

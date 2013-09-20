@@ -192,11 +192,12 @@ static void set_fifohandcheck(int enable)
 //    enable_clocks(0);
 }
 
-static void set_tft_data_lines(u8 data_lines)
+static void set_tft_data_lines(tftdatalines lines)//u8 data_lines)
 {
+
     int code;
     struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
-
+/*
     switch(data_lines) {
         case 12:
                 code = 0;
@@ -214,9 +215,10 @@ static void set_tft_data_lines(u8 data_lines)
 //                BUG();
                 return;
     }
-
+*/
 //    enable_clocks(1);
-    r32setv(&dispc->control, 9, 2, code);
+//    r32setv(&dispc->control, 9, 2, code);
+    r32setv(&dispc->control, 9, 2, (u32)lines);//code);
 //    enable_clocks(0);
 }
 
@@ -331,15 +333,15 @@ static void set_lcd_timings(struct orion_video_timings *timings)
 */
 }
 
-int init_dispc(void)
+int init_dispc(struct orion_display* d)
 {
 //    omap_dispc_register_isr(dsi_framedone_irq_callback, NULL,
 //                            DISPC_IRQ_FRAMEDONE);
 
-    set_lcd_display_type(LCD_DISPLAY_TFT);
-    set_parallel_interface_mode(PARALLELMODE_DSI);
+    set_lcd_display_type(d->display_type);//LCD_DISPLAY_TFT);
+    set_parallel_interface_mode(d->interface_mode);//PARALLELMODE_DSI);
     set_fifohandcheck(ENABLE);
-    set_tft_data_lines(24);
+    set_tft_data_lines(d->color_depth);//24);
 
     {
         struct orion_video_timings timings = {
