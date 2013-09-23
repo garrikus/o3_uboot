@@ -64,29 +64,27 @@ void dsserr(const char* s)
 void dss_clocks(int enable)
 {
     struct dss_cm_registers*  dcm_base  = (struct dss_cm_registers*)DSS_CM_BASE;
-//    struct dss_prm_registers* dprm_base = (struct dss_prm_registers*)DSS_PRM_BASE;
 
-    if(enable) {
-//    r32setv(&dcm_base->clksel, 3, 4, 0x2);
-
-//set DSS1_ALWON_FCLK
+//    if(enable) {
+///set DSS1_ALWON_FCLK
         writel(0x9, &dcm_base->clksel);                 //DPLL4 M4 divide factor for DSS1_ALWON_FCLK is 7
-        r32setv(&dcm_base->fclken, EN_DSS1, 1, 0x1);    //Enable the DSS1_ALWON_FCLK
-//set DSS2_ALWON_FCLK
-        r32setv(&dcm_base->fclken, EN_DSS2, 1, 0x1);    //Enable the DSS2_ALWON_FCLK
-//set DSS_L3_ICLK and DSS_L4_ICLK
-        r32setv(&dcm_base->iclken, EN_DSS,  1, 0x1);    //Enable the DSS_L3_ICLK and DSS_L4_ICLK interface clocks
-        r32setv(&dcm_base->autoidle, AUTO_DSS, 1, 0x1);           //Ensable autoidle mode
+        r32setv(&dcm_base->fclken, EN_DSS1, 1, (u32)enable);//0x1);    //Enable the DSS1_ALWON_FCLK
+///set DSS2_ALWON_FCLK
+        r32setv(&dcm_base->fclken, EN_DSS2, 1, (u32)enable);//0x1);    //Enable the DSS2_ALWON_FCLK
+///set DSS_L3_ICLK and DSS_L4_ICLK
+        r32setv(&dcm_base->iclken, EN_DSS,  1, (u32)enable);//0x1);//Enable the DSS_L3_ICLK and 
+									//DSS_L4_ICLK interface clocks
+        r32setv(&dcm_base->autoidle, AUTO_DSS, 1, (u32)enable);//0x1);           //Ensable autoidle mode
 
         r32setv(&dcm_base->sleepdep, EN_IVA2, 3, 0x6);            //Domain sleep is disabled
-        r32setv(&dcm_base->clkstctrl, CLKTRCTRL_DSS, 2, 0x3);     //Ensable automatic transition
-        r32setv(&dcm_base->fclken, EN_TV, 1, 0x1);
-    } else {
-        r32setv(&dcm_base->fclken, EN_DSS1, 1, 0x0);
-        r32setv(&dcm_base->fclken, EN_DSS2, 1, 0x0);
-        r32setv(&dcm_base->fclken, EN_TV, 1, 0x0);
-        r32setv(&dcm_base->iclken, EN_DSS,  1, 0x0);
-    }
+        r32setv(&dcm_base->clkstctrl, CLKTRCTRL_DSS, 2, 0x3);     //Enable automatic transition
+        r32setv(&dcm_base->fclken, EN_TV, 1, (u32)enable);//0x1);
+//    } else {
+//        r32setv(&dcm_base->fclken, EN_DSS1, 1, 0x0);
+//        r32setv(&dcm_base->fclken, EN_DSS2, 1, 0x0);
+//        r32setv(&dcm_base->fclken, EN_TV, 1, 0x0);
+//        r32setv(&dcm_base->iclken, EN_DSS,  1, 0x0);
+//    }
 }
 
 int dss_reset(void)
@@ -118,107 +116,64 @@ int dss_reset(void)
     return 0;
 }
 
-static void set_lcd_display_type(lcd_display_type type)
+static void set_lcd_display_type(struct orion_display* d)
 {
-    int mode;
-    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
-
-    switch(type) {
-        case LCD_DISPLAY_STN:
-                mode = 0;
-                break;
-
-        case LCD_DISPLAY_TFT:
-                mode = 1;
-                break;
-
-        default:
-//                BUG();
-                return;
-    }
-
 //        enable_clocks(1);
-//        REG_FLD_MOD(DISPC_CONTROL, mode, 3, 3);
-    r32setv(&dispc->control, 3, 1, (u32)mode);
+    r32setv(&d->dispc->control, 3, 1, (u32)d->display_type);
 //        enable_clocks(0);
 }
 
-static void set_parallel_interface_mode(parallel_interface_mode mode)
+static void set_parallel_interface_mode(struct orion_display* d)
 {
     u32 value;
     int stallmode;
     int gpout0 = 1;
     int gpout1;
-    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
 
-    switch(mode) { 
+    switch(d->interface_mode) {
         case PARALLELMODE_BYPASS:
-                stallmode = 0; 
-                gpout1 = 1; 
-                break;  
+                                stallmode = 0;
+                                gpout1    = 1;
+                                break;
 
         case PARALLELMODE_RFBI:
-                stallmode = 1;
-                gpout1 = 0;
-                break;
+                                stallmode = 1;
+                                gpout1    = 0;
+                                break;
 
         case PARALLELMODE_DSI:
-                stallmode = 1;
-                gpout1 = 1;
-                break;
+                                stallmode = 1;
+                                gpout1    = 1;
+                                break;
 
         default:
-//                BUG();
+                dsserr("wrong value of interface mode!");
                 return;
     }
 
 //    enable_clocks(1);
 
-    value = readl(&dispc->control);
+    value = readl(&d->dispc->control);
 
-    setv32(&value, 11, 1, stallmode);
-    setv32(&value, 15, 1, gpout0);
-    setv32(&value, 16, 1, gpout1);
+    setv32(&value, 11, 1, (u32)stallmode);
+    setv32(&value, 15, 1, (u32)gpout0);
+    setv32(&value, 16, 1, (u32)gpout1);
 
-    writel(value, &dispc->control);
+    writel(value, &d->dispc->control);
 //    enable_clocks(0);
 }
 
-static void set_fifohandcheck(int enable)
+static void set_fifohandcheck(struct orion_display* d)
 {
-    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
 //    enable_clocks(1);
-    r32setv(&dispc->control, 16, 1, enable);
+    r32setv(&d->dispc->control, 16, 1, (u32)d->fifohandcheck);
 //    enable_clocks(0);
 }
 
-static void set_tft_data_lines(tftdatalines lines)//u8 data_lines)
+static void set_tft_data_lines(struct orion_display* d)
 {
-
-    int code;
-    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
-/*
-    switch(data_lines) {
-        case 12:
-                code = 0;
-                break;  
-        case 16:        
-                code = 1;
-                break;
-        case 18:
-                code = 2;
-                break;
-        case 24:
-                code = 3;
-                break;
-        default:
-//                BUG();
-                return;
-    }
-*/
 //    enable_clocks(1);
-//    r32setv(&dispc->control, 9, 2, code);
-    r32setv(&dispc->control, 9, 2, (u32)lines);//code);
+    r32setv(&d->dispc->control, 9, 2, (u32)d->color_depth);
 //    enable_clocks(0);
 }
 
@@ -251,72 +206,66 @@ static int is_lcd_timings_error(int hsw, int hfp, int hbp,
 
 //setvalue(u32 source, u8 offset, u8 count, u32 data)
 
-static void set_timings(int hsw, int hfp, int hbp,
-                            int vsw, int vfp, int vbp)
+static void set_timings(struct orion_display* d)
 {
     u32 timing_h, timing_v;
-    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
 
     if (cpu_is_omap24xx()/* || omap_rev() < OMAP3430_REV_ES3_0*/) {
-                setv32(&timing_h, 5, 6,  hsw-1);
-		setv32(&timing_h, 15, 8, hfp-1);
-		setv32(&timing_h, 27, 8, hbp-1);
+                setv32(&timing_h, 5, 6,  d->timings.hsw-1);
+		setv32(&timing_h, 15, 8, d->timings.hfp-1);
+		setv32(&timing_h, 27, 8, d->timings.hbp-1);
 
-		setv32(&timing_v, 5, 6,  vsw-1);
-		setv32(&timing_h, 15, 8, vfp-1);
-                setv32(&timing_h, 27, 8, vbp-1);
+		setv32(&timing_v, 5, 6,  d->timings.vsw-1);
+		setv32(&timing_h, 15, 8, d->timings.vfp-1);
+                setv32(&timing_h, 27, 8, d->timings.vbp-1);
     } else {
-    		setv32(&timing_h, 7, 8,   hsw-1);
-		setv32(&timing_h, 19, 12, hfp-1);
-		setv32(&timing_h, 31, 12, hbp-1);
+    		setv32(&timing_h, 7, 8,   d->timings.hsw-1);
+		setv32(&timing_h, 19, 12, d->timings.hfp-1);
+		setv32(&timing_h, 31, 12, d->timings.hbp-1);
 
-		setv32(&timing_v, 7, 8,   vsw-1);
-		setv32(&timing_h, 19, 12, vfp-1);
-		setv32(&timing_h, 31, 12, vbp-1);
+		setv32(&timing_v, 7, 8,   d->timings.vsw-1);
+		setv32(&timing_h, 19, 12, d->timings.vfp-1);
+		setv32(&timing_h, 31, 12, d->timings.vbp-1);
     }
 
 //    enable_clocks(1);
-    writel(timing_h, &dispc->timing_h);
-    writel(timing_v, &dispc->timing_v);
+    writel(timing_h, &d->dispc->timing_h);
+    writel(timing_v, &d->dispc->timing_v);
 //    enable_clocks(0);
 }
 
-static void set_lcd_size(u16 width, u16 height)
+static void set_lcd_size(struct orion_display* d)
 {
-    if((width > (1 << 11)) || (height > (1 << 11))) {
+    if((d->timings.x_res > (1 << 11)) ||
+       (d->timings.y_res > (1 << 11))) {
 				dsserr("wrong lcd size!");
 				return;
     }
 
     u32 val;
-    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
 
-    setv32(&val, 26, 11, height - 1);
-    setv32(&val, 10, 11, width  - 1);
+    setv32(&val, 26, 11, d->timings.y_res - 1);
+    setv32(&val, 10, 11, d->timings.x_res  - 1);
 //    enable_clocks(1);
-//    dispc_write_reg(DISPC_SIZE_LCD, val);
-    writel(val, &dispc->size_lcd);
+    writel(val, &d->dispc->size_lcd);
 //    enable_clocks(0);
 }
 
-static void set_lcd_timings(struct orion_video_timings *timings)
+static void set_lcd_timings(struct orion_display* d)
 {
+    if(is_lcd_timings_error(d->timings.hsw, d->timings.hfp,
+                            d->timings.hbp, d->timings.vsw,
+                            d->timings.vfp, d->timings.vbp)) {
+						dsserr("wrong timings!");
+						return;
+    }
+
+    set_timings(d);
+    set_lcd_size(d);
+/*
     unsigned xtot, ytot;
     unsigned long ht, vt;
 
-    if(is_lcd_timings_error(timings->hsw, timings->hfp,
-                            timings->hbp, timings->vsw,
-                            timings->vfp, timings->vbp)) {
-//                BUG();
-				dsserr("wrong timings!");
-				return;
-    }
-
-    set_timings(timings->hsw, timings->hfp, timings->hbp,
-    		timings->vsw, timings->vfp, timings->vbp);
-
-    set_lcd_size(timings->x_res, timings->y_res);
-/*
     xtot = timings->x_res + timings->hfp + timings->hsw + timings->hbp;
     ytot = timings->y_res + timings->vfp + timings->vsw + timings->vbp;
 
@@ -338,81 +287,17 @@ int init_dispc(struct orion_display* d)
 //    omap_dispc_register_isr(dsi_framedone_irq_callback, NULL,
 //                            DISPC_IRQ_FRAMEDONE);
 
-    set_lcd_display_type(d->display_type);//LCD_DISPLAY_TFT);
-    set_parallel_interface_mode(d->interface_mode);//PARALLELMODE_DSI);
-    set_fifohandcheck(ENABLE);
-    set_tft_data_lines(d->color_depth);//24);
-
-    {
-        struct orion_video_timings timings = {
-		.x_res		= 480,
-		.y_res		= 800,
-                .hsw            = 1,
-                .hfp            = 1,
-                .hbp            = 1,
-                .vsw            = 1,
-                .vfp            = 0,
-                .vbp            = 0,
-        };
-
-        set_lcd_timings(&timings);
-    }
-
+    set_lcd_display_type(d);				//LCD_DISPLAY_TFT);
+    set_parallel_interface_mode(d);			//PARALLELMODE_DSI);
+    set_fifohandcheck(d);
+    set_tft_data_lines(d);				//24);
+    set_lcd_timings(d);
+    
     dssmsg(" DISPC init done........................... ok");
 
     return 0;
 }
 
-/*
-void display_init_dispc(void)
-{
-//    u32 val = 0;
-    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
-
-//    writel(0x2, &dispc->sysconfig);
-//
-//    if(wait_for_bit(&dispc->sysstatus, 0, 1, 1, 100000)) {
-//				dsserr("DISPC reset is not completed!");
-//				return;
-//    }
-
-
-//    r32setv(&dispc->control, 5, 1, 1);
-
-    writel(1, &dispc->sysconfig);		//Automatic L3 and L4 interface clock gating 
-    						//	strategy is applied based on interface activity.
-    r32setv(&dispc->sysconfig, 2, 1, 1);	//Wakeup is enabled.
-    r32setv(&dispc->sysconfig, 4, 2, 2);	//Smart idle.
-    r32setv(&dispc->sysconfig, 13, 2, 2);	//Smart Standby.
-                
-    writel(0x1ffff, &dispc->irqstatus);		//Reset all events
-    writel(0xd64f, &dispc->irqenable);	//Enable interrupt
-    
-//      Color depth 24 bit
-    r32setv(&dispc->control, 9, 2, 3);
- 
-//     dispc_set_lcd_display_type
-    r32setv(&dispc->control, 3, 1, 1);		//Active Matrix display operation enabled
-
-//     dispc_set_parallel_interface_mode
-    r32setv(&dispc->control, 11, 1, 1);
-    r32setv(&dispc->control, 15, 1, 1);
-    r32setv(&dispc->control, 16, 1, 1);
-
-//    dispc_set_lcd_timings(&timings)
-     writel(0x0, &dispc->timing_h);
-     writel(0x0, &dispc->timing_v);
-//  dispc_set_lcd_size
-     writel(0x031f01df, &dispc->size_lcd);       //Set the number of lines on the LCD panel.
-
-//    dispc_enable_fifohandcheck
-    writel((1 << 16), &dispc->config);
-
-    r32setv(&dispc->control, 5, 1, 1);		//Users have finished programming the shadow registers
-
-    dssmsg(" DISPC init done........................... ok");
-}
-*/
 int dsi_reset(void)
 {
     u32 val = 0;

@@ -344,44 +344,6 @@ volatile struct dss_cm_registers {
 
 
 
-/*
-
-struct orion_display_system {
-	struct display_subsystem_registers*  dss;
-        struct display_controller_registers* dispc;
-        struct dsi_engine_registers*         dsi;
-        struct dsi_phy_registers*            phy;
-        struct dsi_pll_registers*            pll;
-        struct dss_cm_registers*             dcm;
-        struct dss_prm_registers*            dprm;
-} display;
-
-
-struct channel_num {
-	u32* vc_ctrl;
-	u32* vc_sysconfig;
-	
-	
-};
-
-struct device {
-	struct channel_num* channel;
-	int vc_num;
-	dsi_vc_port port;
-};
-
-
-
-display = {
-	.dss = (struct display_subsystem_registers*)DISPLAY_SUBSYSTEM_BASE;
-	
-	
-	
-};
-
-*/
-
-
 
 
 
@@ -406,7 +368,7 @@ typedef enum {
         PARALLELMODE_DSI,
 } parallel_interface_mode;
 
-struct orion_video_timings {
+static struct orion_video_timings {
 	/* Unit: pixels */
 	u16 x_res;
 	/* Unit: pixels */
@@ -432,12 +394,14 @@ struct orion_video_timings {
 
 struct orion_display {
 	struct display_controller_registers* dispc;
-	tftdatalines            color_depth;
-	lcd_display_type        display_type;
-	parallel_interface_mode interface_mode;
+	struct orion_video_timings 	     timings;
+	tftdatalines			     color_depth;
+	lcd_display_type		     display_type;
+	parallel_interface_mode		     interface_mode;
+	int				     fifohandcheck;
 };
 
-
+/*
 typedef enum {
         l4_interconnect,
         video_port
@@ -469,7 +433,7 @@ enum dss_clock {
         DSS_CLK_54M     = 1 << 3,
         DSS_CLK_96M     = 1 << 4,
 };
-
+*/
 
 //=========================================================================================
 
@@ -484,32 +448,3 @@ enum dss_clock {
 #endif /* __KERNEL_STRICT_NAMES */
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

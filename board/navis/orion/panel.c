@@ -77,63 +77,74 @@ struct orion_display display_get_device(int device)
     struct orion_display d;
 
     if(device == 2) {
-		d.dispc          = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE,
-		d.color_depth    = color_depth_24_bit,
-		d.display_type   = LCD_DISPLAY_TFT,
-		d.interface_mode = PARALLELMODE_DSI;
-    }
+	d.dispc               = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE,
+	d.timings.x_res       = 480,
+	d.timings.y_res       = 800,
+	d.timings.pixel_clock = 0,
+	d.timings.hsw         = 1,
+	d.timings.hfp 	      = 1,
+	d.timings.hbp 	      = 1,
+	d.timings.vsw 	      = 1,
+	d.timings.vfp 	      = 0,
+	d.timings.vbp 	      = 0,
+	d.color_depth	      = color_depth_24_bit,
+	d.display_type        = LCD_DISPLAY_TFT,
+	d.interface_mode      = PARALLELMODE_DSI,
+	d.fifohandcheck	      = ENABLE;
+    } else
+    	memset(&d, 0, sizeof(d));
 
     return d;
 }
 
-#define FAIL		1
 #define ORION2		2
 
 int orion_display_enable(void)
 {
-    struct orion_display display;
-
-    display = display_get_device(ORION2);
+    struct orion_display display =
+    		display_get_device(ORION2);
 
     if(display.dispc == NULL) {
 		dsserr("failed to start device!");
 		return 1;
     }
-/*
-    struct orion_display d = {
-		.dispc          = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE,
-		.color_depth    = color_depth_24_bit,
-		.display_type   = LCD_DISPLAY_TFT,
-		.interface_mode = PARALLELMODE_DSI
-	};
-*/
+
     if(dss_reset()) {
                 dsserr("DSS reset sequence is not completed");
-                return 1;
-    } //else
-//      dssmsg("DSS reset sequence is complete... ok");
+//                return 1;
+		goto error;
+    }
 
-//    display_init_dispc();
-    init_dispc(&display);
+    if(init_dispc(&display)) {
+//		uninit_dispc();
+		dsserr("DISPC init failed!");
+//		return 1;
+		goto error;
+    }
 
     if(dsi_reset()) {
                 dsserr("DSI softreset failed!");
-                return 1;
-    } //else
-//      dssmsg("The softreset DSI completed... ok");
+//                return 1;
+		goto error;
+    }
 
     if(display_init_dsi()) {
                 dsserr("DSI init failed!");
-                return 1;
+//                return 1;
+		goto error;
     }
 
     return 0;
+
+error:
+    dss_clocks(DISABLE);
+    return 1;
 }
 
 int panel_init(void)
 {
 // common setting //
-    unsigned char SETEXTC[4] = {0xB9, 0xFF, 0x83, 0x69};
+    unsigned char SETEXTC[4]  = {0xB9, 0xFF, 0x83, 0x69};
     unsigned char SETMIPI[14] = {
                         0xBA, 0x00, 0xA0, 0xC6,
                         0x00, 0x0A, 0x00, 0x10,
@@ -158,28 +169,10 @@ int panel_init(void)
             0x4E, 0x57, 0x75
     };
 
-    orion_display_enable();
-/*
-    if(dss_reset()) {
-                dsserr("DSS reset sequence is not completed");
-                return 1;
-    } //else
-//	dssmsg("DSS reset sequence is complete... ok");
-
-//    display_init_dispc();
-    init_dispc();
-
-    if(dsi_reset()) {
-                dsserr("DSI softreset failed!");
-                return 1;
-    } //else
-//	dssmsg("The softreset DSI completed... ok");
-
-    if(display_init_dsi()) {
-		dsserr("DSI init failed!");
-                return 1;
+    if(orion_display_enable()) {
+		dsserr("failed to enable display!");
     }
-*/
+
     enable_vc_irq(VC0, PACKET_SENT_IRQ, ENABLE);
     vc_enable_hs_mode(VC0, DISABLE);
 
@@ -187,7 +180,6 @@ int panel_init(void)
     						return 1;
     if(vc_dcs_write(VC0, SETGIP, sizeof(SETGIP)))
     						return 1;
-//    udelay(10000),
     if(vc_dcs_write(VC0, SETTPSNR, sizeof(SETTPSNR)))
     						return 1;
     if(vc_dcs_write(VC0, SETMIPI, sizeof(SETMIPI)))
@@ -197,7 +189,6 @@ int panel_init(void)
 
     if(vc_dcs_write(VC0, &command, sizeof(command)))
     						return 1;
-//    udelay(120000);
 /*
     u8 id1, id2, id3;
     u8 buf[1];
