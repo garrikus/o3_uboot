@@ -18,42 +18,7 @@ void frame_reset(void)
       addr++;
     }
 }
-/*
-void set_line(const int x, int line, int* points, int len)
-{
-    int offset,
-        y,
-        dot,
-        i;
-    u32 addr, color;
 
-    for(i = 0; i < len; i++) {
-            if(points[i])
-                color = 0xffffffff;
-            else
-                color = 0;
-
-                y = 360 * (line - 1) + 1;
-                dot = y + x + i;
-                offset = 4 * (dot - 1);
-                addr = 0x8fc00000 + offset;
-                *((ulong*)addr) = (ulong)color;
-    }
-}
-
-void char_to_frame(const int x, int line, int* chr, int str_count, int pix_count)
-{
-    int i, *p;
-
-    for(i = 0; i < str_count; i++) {
-        p = &chr[i * pix_count];
-        set_line(x, line++, p, pix_count);
-
-        if(str_count == 6)
-                set_line(x, line++, p, pix_count);
-    }
-}
-*/
 void panel_backlight(int state)
 {
     timer_t* tm = init_timer(gpt9);
@@ -77,20 +42,33 @@ struct orion_display display_get_device(int device)
     struct orion_display d;
 
     if(device == 2) {
-	d.dispc               = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE,
-	d.timings.x_res       = 480,
-	d.timings.y_res       = 800,
-	d.timings.pixel_clock = 0,
-	d.timings.hsw         = 1,
-	d.timings.hfp 	      = 1,
-	d.timings.hbp 	      = 1,
-	d.timings.vsw 	      = 1,
-	d.timings.vfp 	      = 0,
-	d.timings.vbp 	      = 0,
-	d.color_depth	      = color_depth_24_bit,
-	d.display_type        = LCD_DISPLAY_TFT,
-	d.interface_mode      = PARALLELMODE_DSI,
-	d.fifohandcheck	      = ENABLE;
+	d.dispc                = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE,
+	d.dctrl.dsi	       = (struct dsi_engine_registers*)DSI_PROTOCOL_ENGINE_BASE,
+	d.dctrl.dss	       = (struct display_subsystem_registers*)DISPLAY_SUBSYSTEM_BASE,
+	d.dctrl.pll	       = (struct dsi_pll_registers*)DSI_PLL_BASE,
+	d.dctrl.phy	       = (struct dsi_phy_registers*)DSI_PHY_BASE,
+	d.timings.x_res        = 480,
+	d.timings.y_res        = 800,
+	d.timings.pixel_clock  = 0,
+	d.timings.hsw          = 1,
+	d.timings.hfp 	       = 1,
+	d.timings.hbp 	       = 1,
+	d.timings.vsw 	       = 1,
+	d.timings.vfp 	       = 0,
+	d.timings.vbp 	       = 0,
+	d.clocks.dsi_pll_regn  = 13,
+	d.clocks.dsi_pll_regm  = 138,
+	d.clocks.dss_clock_div = 6,
+	d.clocks.dsiproto_div  = 6,
+	d.clocks.use_dss2_fck  = true,
+	d.clocks.dispc_clk_src = DSS_SRC_DSI1_PLL_FCLK,
+	d.clocks.dsi_clk_src   = DSS_SRC_DSI2_PLL_FCLK,
+	d.color_depth	       = color_depth_24_bit,
+	d.display_type         = LCD_DISPLAY_TFT,
+	d.interface_mode       = PARALLELMODE_DSI,
+	d.fifohandcheck	       = ENABLE,
+	d.logic_clk_div	       = 1,
+	d.pixel_clk_div	       = 4;
     } else
     	memset(&d, 0, sizeof(d));
 
@@ -98,6 +76,7 @@ struct orion_display display_get_device(int device)
 }
 
 #define ORION2		2
+#define ORION3          3
 
 int orion_display_enable(void)
 {
@@ -111,26 +90,22 @@ int orion_display_enable(void)
 
     if(dss_reset()) {
                 dsserr("DSS reset sequence is not completed");
-//                return 1;
 		goto error;
     }
 
     if(init_dispc(&display)) {
 //		uninit_dispc();
 		dsserr("DISPC init failed!");
-//		return 1;
 		goto error;
     }
 
     if(dsi_reset()) {
                 dsserr("DSI softreset failed!");
-//                return 1;
 		goto error;
     }
 
-    if(display_init_dsi()) {
+    if(init_dsi(&display)) {
                 dsserr("DSI init failed!");
-//                return 1;
 		goto error;
     }
 
@@ -171,6 +146,7 @@ int panel_init(void)
 
     if(orion_display_enable()) {
 		dsserr("failed to enable display!");
+		return 1;
     }
 
     enable_vc_irq(VC0, PACKET_SENT_IRQ, ENABLE);

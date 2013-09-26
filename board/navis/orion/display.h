@@ -141,9 +141,9 @@
 
 
 
-#define DSS_SRC_DSI1_PLL_FCLK                   0
-#define DSS_SRC_DSI2_PLL_FCLK                   1
-#define DSS_SRC_DSS1_ALWON_FCLK                 2
+//#define DSS_SRC_DSI1_PLL_FCLK                   0
+//#define DSS_SRC_DSI2_PLL_FCLK                   1
+//#define DSS_SRC_DSS1_ALWON_FCLK                 2
 
 #define DCS_TEAR_OFF            		0x34
 #define DCS_TEAR_ON             		0x35
@@ -343,9 +343,10 @@ volatile struct dss_cm_registers {
 };
 
 
-
-
-
+typedef enum {
+	false,
+	true
+} bool;
 
 
 //DISPC
@@ -389,17 +390,50 @@ static struct orion_video_timings {
 	u16 vbp;	/* Vertical back porch */
 };
 
+static struct display_control {
+	struct dsi_engine_registers         *dsi;
+	struct dsi_pll_registers            *pll;
+	struct display_subsystem_registers  *dss;
+	struct dsi_phy_registers            *phy;
+};
 
+typedef enum {
+	DSS_SRC_DSI1_PLL_FCLK,
+        DSS_SRC_DSI2_PLL_FCLK,
+        DSS_SRC_DSS1_ALWON_FCLK,
+} dss_clk_source;
 
+static struct display_clocks {
+	u32 dsi_pll_regn;
+	u32 dsi_pll_regm;
+	u32 dss_clock_div;
+	u32 dsiproto_div;
+	bool use_dss2_fck;
+	dss_clk_source dispc_clk_src;
+	dss_clk_source dsi_clk_src;
+};
 
 struct orion_display {
-	struct display_controller_registers* dispc;
+	struct display_controller_registers *dispc;
+	struct display_control		     dctrl;
 	struct orion_video_timings 	     timings;
+	struct display_clocks		     clocks;
 	tftdatalines			     color_depth;
 	lcd_display_type		     display_type;
 	parallel_interface_mode		     interface_mode;
 	int				     fifohandcheck;
+	u32				     logic_clk_div;
+	u32				     pixel_clk_div;
 };
+
+/*
+struct orion_device {
+	struct dsi_engine_registers* dsi;
+	struct dsi_pll_registers*            pll;
+	struct display_subsystem_registers* dss;
+	
+};
+*/
 
 /*
 typedef enum {

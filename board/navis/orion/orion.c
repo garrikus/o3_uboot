@@ -559,13 +559,13 @@ static void set_picture_to_display(void)
     udelay(5000);
 
     if(panel_init()) {
-	if(panel_init())
+//	if(panel_init())
 		puts("ERROR: panel don't init!\n");
 		return;
     }
 
     if(panel_update()) {
-        if(panel_update())
+//        if(panel_update())
         puts("ERROR: panel don't update!\n");
         return;
     }
