@@ -2,8 +2,8 @@
 #define __DSS_DRIVER_H__
 
 
-#define ENABLE				1
-#define DISABLE				0
+#define ENABLE				true
+#define DISABLE				false
 #define ON				1
 #define OFF				0
 
@@ -141,8 +141,8 @@
 
 
 
-//#define DSS_SRC_DSI1_PLL_FCLK                   0
-//#define DSS_SRC_DSI2_PLL_FCLK                   1
+#define LP_CLK_DIVISOR				12
+#define LP_RX_SYNCHRO_ENABLE			21
 //#define DSS_SRC_DSS1_ALWON_FCLK                 2
 
 #define DCS_TEAR_OFF            		0x34
@@ -351,45 +351,6 @@ typedef enum {
 
 //DISPC
 
-typedef enum {
-	color_depth_12_bit,
-	color_depth_16_bit,
-	color_depth_18_bit,
-	color_depth_24_bit
-} tftdatalines;				//Number of lines of the LCD interface
-
-typedef enum {
-	LCD_DISPLAY_STN,
-	LCD_DISPLAY_TFT,
-} lcd_display_type;
-
-typedef enum {
-        PARALLELMODE_BYPASS,           /* MIPI DPI */
-        PARALLELMODE_RFBI,             /* MIPI DBI */
-        PARALLELMODE_DSI,
-} parallel_interface_mode;
-
-static struct orion_video_timings {
-	/* Unit: pixels */
-	u16 x_res;
-	/* Unit: pixels */
-	u16 y_res;
-	/* Unit: KHz */
-	u32 pixel_clock;
-	/* Unit: pixel clocks */
-	u16 hsw;	/* Horizontal synchronization pulse width */
-	/* Unit: pixel clocks */
-	u16 hfp;	/* Horizontal front porch */
-	/* Unit: pixel clocks */
-	u16 hbp;	/* Horizontal back porch */
-	/* Unit: line clocks */
-	u16 vsw;	/* Vertical synchronization pulse width */
-	/* Unit: line clocks */
-	u16 vfp;	/* Vertical front porch */
-	/* Unit: line clocks */
-	u16 vbp;	/* Vertical back porch */
-};
-
 static struct display_control {
 	struct dsi_engine_registers         *dsi;
 	struct dsi_pll_registers            *pll;
@@ -403,27 +364,71 @@ typedef enum {
         DSS_SRC_DSS1_ALWON_FCLK,
 } dss_clk_source;
 
-static struct display_clocks {
-	u32 dsi_pll_regn;
-	u32 dsi_pll_regm;
-	u32 dss_clock_div;
-	u32 dsiproto_div;
-	bool use_dss2_fck;
-	dss_clk_source dispc_clk_src;
-	dss_clk_source dsi_clk_src;
-};
-
 struct orion_display {
 	struct display_controller_registers *dispc;
 	struct display_control		     dctrl;
-	struct orion_video_timings 	     timings;
-	struct display_clocks		     clocks;
-	tftdatalines			     color_depth;
-	lcd_display_type		     display_type;
-	parallel_interface_mode		     interface_mode;
-	int				     fifohandcheck;
+
+	struct orion_video_timings {
+		/* Unit: pixels */
+		u16 x_res;
+		/* Unit: pixels */
+		u16 y_res;
+		/* Unit: KHz */
+		u32 pixel_clock;
+		/* Unit: pixel clocks */
+		u16 hsw;	/* Horizontal synchronization pulse width */
+		/* Unit: pixel clocks */
+		u16 hfp;	/* Horizontal front porch */
+		/* Unit: pixel clocks */
+		u16 hbp;	/* Horizontal back porch */
+		/* Unit: line clocks */
+		u16 vsw;	/* Vertical synchronization pulse width */
+		/* Unit: line clocks */
+		u16 vfp;	/* Vertical front porch */
+		/* Unit: line clocks */
+		u16 vbp;	/* Vertical back porch */
+	} timings;
+
+	struct display_clocks {
+		bool use_dss2_fck;
+		bool use_hsdiv;
+		dss_clk_source dispc_clk_src;
+		dss_clk_source dsi_clk_src;
+		u32 fint;
+//		u32 dsi1_pll_fclk;
+//		u32 dsi2_pll_fclk;
+	} clocks;
+
+	enum tft_data_lines {
+		COLOR_DEPTH_12_BIT,
+		COLOR_DEPTH_16_BIT,
+		COLOR_DEPTH_18_BIT,
+		COLOR_DEPTH_24_BIT,
+	} color_depth;
+
+	enum lcd_display_type {
+		LCD_DISPLAY_STN,
+		LCD_DISPLAY_TFT,
+	} display_type;
+
+	enum parallel_interface_mode {
+		PARALLELMODE_BYPASS,           /* MIPI DPI */
+	        PARALLELMODE_RFBI,             /* MIPI DBI */
+    		PARALLELMODE_DSI,
+	} interface_mode;
+
+	bool				     fifohandcheck;
 	u32				     logic_clk_div;
 	u32				     pixel_clk_div;
+
+	struct complexio_cfg {
+		u32 clk_lane;
+		u32 clk_pol;
+		u32 data1_lane;
+		u32 data1_pol;
+		u32 data2_lane;
+		u32 data2_pol;
+	} complexio;
 };
 
 /*

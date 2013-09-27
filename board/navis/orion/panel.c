@@ -49,26 +49,32 @@ struct orion_display display_get_device(int device)
 	d.dctrl.phy	       = (struct dsi_phy_registers*)DSI_PHY_BASE,
 	d.timings.x_res        = 480,
 	d.timings.y_res        = 800,
-	d.timings.pixel_clock  = 0,
+	d.timings.pixel_clock  = 30,//23,			//MHz
 	d.timings.hsw          = 1,
 	d.timings.hfp 	       = 1,
 	d.timings.hbp 	       = 1,
 	d.timings.vsw 	       = 1,
 	d.timings.vfp 	       = 0,
 	d.timings.vbp 	       = 0,
-	d.clocks.dsi_pll_regn  = 13,
-	d.clocks.dsi_pll_regm  = 138,
-	d.clocks.dss_clock_div = 6,
-	d.clocks.dsiproto_div  = 6,
 	d.clocks.use_dss2_fck  = true,
+	d.clocks.use_hsdiv     = true,
 	d.clocks.dispc_clk_src = DSS_SRC_DSI1_PLL_FCLK,
 	d.clocks.dsi_clk_src   = DSS_SRC_DSI2_PLL_FCLK,
-	d.color_depth	       = color_depth_24_bit,
+	d.clocks.fint          = 2000000,		//Hz
+//	d.clocks.dsi1_pll_fclk = 96,//92,			//MHz
+//	d.clocks.dsi2_pll_fclk = 96,//92,			//MHz
+	d.color_depth	       = COLOR_DEPTH_24_BIT,
 	d.display_type         = LCD_DISPLAY_TFT,
 	d.interface_mode       = PARALLELMODE_DSI,
 	d.fifohandcheck	       = ENABLE,
 	d.logic_clk_div	       = 1,
-	d.pixel_clk_div	       = 4;
+	d.pixel_clk_div	       = 4,
+	d.complexio.clk_lane   = 2,
+	d.complexio.clk_pol    = 0,
+	d.complexio.data1_lane = 1,
+	d.complexio.data1_pol  = 0,
+	d.complexio.data2_lane = 3,
+	d.complexio.data2_pol  = 0;
     } else
     	memset(&d, 0, sizeof(d));
 

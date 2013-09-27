@@ -137,10 +137,6 @@ static void dsi_tmp_reset_fix()
         do_reset(NULL, 0, 0, NULL);
 
         printf("Reset error???\n");
-//-------------------------------------------------------------------   
-//    	udelay(500000);
-//	dsi_tmp_reset_fix();
-//------------------------------------------------------------------- 
     }
     else
         printf("Active VAUX3 found. Go ahead.\n");
@@ -571,119 +567,13 @@ static void set_picture_to_display(void)
     }
 }
 
-//#define I2C_ACCUM_DEBUG
-#define I2C_FUEL_GAUGE                                  0x55
-#define I2C_CHARGER                                     0x09
-
-static inline void shutdown(void)
-{
-    int i;
-
-    i2c_set_bus_num(0);
-
-    for(i = 0; i < 3; i++)
-	twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01,
-			     TWL4030_PM_MASTER_P1_SW_EVENTS + i);
-}
-
-
-static int check_accum()
-{
-	unsigned int bus = i2c_get_bus_num();
-        int error = 1;
-
-        if(bus != 2 &&
-           i2c_set_bus_num(2) < 0) {
-                        udelay(1000);
-
-                        if(i2c_set_bus_num(2) < 0) {
-                                printf("ERROR: Access to I2C bus num 2 is failed!\n");
-                        }
-        }
-
-        if(i2c_get_bus_num() == 2) {
-                if(!i2c_probe(I2C_FUEL_GAUGE)) {
-                        uchar volt1, volt2;
-                        uint  voltage = 0;
-                        int   i, j;
-                        const int count_try = 3;
-
-                        for(j = 0; j < count_try; j++) {
-                                for(i = 0; i < 3; i++) {
-                                        if(!(error = smb_read(I2C_FUEL_GAUGE, 0x09, &volt1))) {
-                                                voltage += (uint)volt1;
-                                                voltage <<= 8;
-                                                break;
-                                        } else
-                                                udelay(1000 + i * 10000);
-                                }
-
-                                for(i = 0; i < 3; i++) {
-                                        if(!(error = smb_read(I2C_FUEL_GAUGE, 0x08, &volt2))) {
-                                                voltage |= (uint)volt2;
-                                                break;
-                                        } else
-                                                udelay(1000 + i * 10000);
-                                }
-
-                                if(voltage < 300)
-                                        udelay(1000000);
-                                else
-                                        break;
-                        }
-
-		printf("VALUE OF VOLTAGE ACCUM IS %d.%d V\n", voltage/1000, voltage%1000);
-//		printf("VALUE OF VOLTAGE ACCUM IS %d\n", voltage);
-
-			if(voltage <= 3200) {
-                                if(voltage < 300) {
-                                        printf("Too low accumulator voltage!\nUnable to boot...\n");
-                                        goto shutdown;
-                                }
-
-                                if(!i2c_probe(I2C_CHARGER)) {
-                                        for(i = 0; i < 3; i++) {
-                                                if(!(error = smb_read(I2C_CHARGER, 0x04, &volt1)))
-                                                                                                   break;
-                                                else
-                                                        udelay(1000 + i * 10000);
-                                        }
-
-                                        if(!error && (volt1 & 0x80) && (volt1 & 0x40)) {
-                                                smb_write(I2C_CHARGER, 0x02, 0xff);
-                                                smb_write(I2C_CHARGER, 0x01, 0xaf);
-                                                smb_write(I2C_CHARGER, 0x00, 0x61);
-                                        } else {
-                                                        printf("Need charging!\n");
-                                                        goto shutdown;
-                                                                        }
-                                } else {
-                                                printf("ERROR: i2c test charge controller is failed!\n");
-                                                error = 1;
-                                                                }
-                        } else
-                                error = 0;
-                } else {
-                                printf("ERROR: i2c test fuel gauge is failed!\n");
-                                error = 1;
-                }
-        }
-
-        i2c_set_bus_num(bus);
-
-        return error;
-
-shutdown:
-        printf("SHUTDOWN!");
-        shutdown();
-}
-
 /*
  * Routine: misc_init_r
  * Description: Init ethernet (done here so udelay works)
  */
 int misc_init_r(void)
 {
+//check_accum();
 #ifdef CONFIG_DRIVER_OMAP34XX_I2C
     dsi_tmp_reset_fix();
     set_picture_to_display();
@@ -697,8 +587,6 @@ int misc_init_r(void)
     vaux4_on();
     i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 #endif
-
-    check_accum();
 
 #if defined(CONFIG_CMD_NET)
 	setup_net_chip();

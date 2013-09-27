@@ -61,9 +61,9 @@ void dsserr(const char* s)
 }
 
 
-void dss_clocks(int enable)
+void dss_clocks(bool enable)
 {
-    struct dss_cm_registers*  dcm_base  = (struct dss_cm_registers*)DSS_CM_BASE;
+    struct dss_cm_registers* dcm_base  = (struct dss_cm_registers*)DSS_CM_BASE;
 
 //    if(enable) {
 ///set DSS1_ALWON_FCLK
@@ -355,27 +355,27 @@ void dsi_initialize_irq(struct orion_display* d)
     writel(DSI_CIO_IRQ_ERROR_MASK, &d->dctrl.dsi->complexio_irqenable);
 }
 
-int dsi_pll_init(void)
+int dsi_pll_init(struct orion_display* d)
 {
-    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
-    struct dsi_engine_registers*         dsi   = (struct dsi_engine_registers*)DSI_PROTOCOL_ENGINE_BASE;
-    struct dsi_pll_registers*            pll   = (struct dsi_pll_registers*)DSI_PLL_BASE;
+//    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
+//    struct dsi_engine_registers*         dsi   = (struct dsi_engine_registers*)DSI_PROTOCOL_ENGINE_BASE;
+//    struct dsi_pll_registers*            pll   = (struct dsi_pll_registers*)DSI_PLL_BASE;
 
 //     dispc_pck_free_enable
-    r32setv(&dispc->control, 27, 1, 1);
+    r32setv(&d->dispc->control, 27, 1, 1);
 
-    if(wait_for_bit(&pll->status, 0, 1, 1, 100000)) {
+    if(wait_for_bit(&d->dctrl.pll->status, 0, 1, 1, 100000)) {
 				dsserr("PLL not coming out of reset!");
                                 return 1;
     } //else
 //    	dssmsg("PLL ok...");
 
 //dispc_pck_free_disable
-    r32setv(&dispc->control, 27, 1, 0);
+    r32setv(&d->dispc->control, 27, 1, 0);
 //10    dsi_pll_power
-    r32setv(&dsi->clk_ctrl, 31, 2, 0x2);    //DSI_PLL_POWER_ON_ALL    = 0x2
+    r32setv(&d->dctrl.dsi->clk_ctrl, 31, 2, 0x2);    //DSI_PLL_POWER_ON_ALL    = 0x2
 
-    if(wait_for_bit(&dsi->clk_ctrl, 29, 2, 0x2, 1000)) {
+    if(wait_for_bit(&d->dctrl.dsi->clk_ctrl, 29, 2, 0x2, 1000)) {
                                  dsserr("Failed to set DSI PLL power mode to POWER_ON_ALL!");
                                  return 1;
     } //else
@@ -386,21 +386,67 @@ int dsi_pll_init(void)
     return 0;
 }
 
+unsigned int get_sys_clk(void)
+{
+    switch(readl(0x48306d40)) {
+	case 0:
+		return 12000000;
+	case 1:
+	        return 13000000;
+	case 2:
+	        return 19200000;
+	case 3:
+	        return 26000000;
+	case 4:
+	        return 38400000;
+	case 5:
+	        return 16800000;
+    }
+}
+
 int dsi_configure_dsi_clocks(struct orion_display* d)
 {
+    u32 clkin, highfreq, regn, regm, clkin4ddr, regm3 = 0, regm4 = 0;
+
+    if(d->clocks.fint < 32000 || d->clocks.fint > 52000000) {
+		dsserr("wrong value of Fint!");
+		return 1;
+    }
+
+    if(d->clocks.use_dss2_fck)
+		clkin = get_sys_clk();//26000000;
+
+    if(clkin < 32000000) {
+		highfreq = 0;
+		regn     = clkin/d->clocks.fint - 1;
+    } else {
+		highfreq = 1;
+		regn     = clkin/2 * d->clocks.fint - 1;
+    }
+
+    clkin4ddr = d->timings.pixel_clock * (12 + (u32)d->color_depth * 4);//552
+    regm      = (clkin4ddr * (regn + 1) * (highfreq + 1))/(2 * clkin/1000000);
+
+    if(d->clocks.use_hsdiv) {
+		regm3 = clkin4ddr/d->pixel_clk_div * d->timings.pixel_clock - 1;
+		regm4 = clkin4ddr/d->pixel_clk_div * d->timings.pixel_clock - 1;
+//		regm3 = clkin4ddr/120;//d->clocks.dsi1_pll_fclk - 1;
+//              regm4 = clkin4ddr/120;//d->clocks.dsi2_pll_fclk - 1;
+    }
+
     r32setv(&d->dctrl.pll->control, 0, 1, 0);        // DSI_PLL_AUTOMODE = manual
-    u32 val = readl(&d->dctrl.pll->configuration1);
+    u32 val = 0;//readl(&d->dctrl.pll->configuration1);
     setv32(&val, 0, 1, 1);				// DSI_PLL_STOPMODE
-    setv32(&val, 7, 7, d->clocks.dsi_pll_regn - 1);//0xc);
-    setv32(&val, 18, 11, d->clocks.dsi_pll_regm);//138);
-    setv32(&val, 22, 4, d->clocks.dss_clock_div - 1);//5);
-    setv32(&val, 26, 4, d->clocks.dsiproto_div - 1);//5);
+    setv32(&val, 7, 7,   regn);//0xc);
+    setv32(&val, 18, 11, regm);//138);
+    setv32(&val, 22, 4,  regm3 > 0 ? regm3 : 0);//5);
+    setv32(&val, 26, 4,  regm4 > 0 ? regm4 : 0);//5);
     writel(val, &d->dctrl.pll->configuration1);
 
     val = 0;
     setv32(&val, 11, 1, d->clocks.use_dss2_fck ? 0 : 1);//0);                  //DSI_PLL_CLKSEL
 
-    u32 highfreq = d->clocks.use_dss2_fck ? 0 : 1;
+//    u32 highfreq = d->clocks.use_dss2_fck ? 0 : 1;
     
     setv32(&val, 12, 1, highfreq);//0);                 //DSI_PLL_HIGHFREQ
     setv32(&val, 13, 1, 1);
@@ -450,17 +496,11 @@ int dss_select_dispc_clk_source(struct orion_display* d)//const int source)
 
 int dss_select_dsi_clk_source(struct orion_display* d)//const int source)
 {
-//    struct display_subsystem_registers* dss = (struct display_subsystem_registers*)DISPLAY_SUBSYSTEM_BASE;
-//    struct dsi_pll_registers*           pll = (struct dsi_pll_registers*)DSI_PLL_BASE;
-//    int bit = source == DSS_SRC_DSS1_ALWON_FCLK ? 0 : 1;
-
-//11.1  dsi_wait_dsi2_pll_active()
     if(wait_for_bit(&d->dctrl.pll->status, 8, 1, 1, 100000)) {
 				dsserr("DSI2 PLL clock not active!");
                                 return 1;
     } //else
 //    	dssmsg("DSI2 PLL clock active...ok");
-//11.1----------------------------------------------------------------
     r32setv(&d->dctrl.dss->control, 1, 1,
     	   (u32)d->clocks.dsi_clk_src == DSS_SRC_DSS1_ALWON_FCLK ? 0 : 1);//bit);        //DSI_CLK_SWITCH
 
@@ -471,24 +511,19 @@ int dss_select_dsi_clk_source(struct orion_display* d)//const int source)
 
 void dsi_configure_dispc_clocks(struct orion_display* d)
 {
-//    u32 val = 0x4;                          //Set the logic clock divisor (LCD).
-//    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
-
-//    setv32(&val, 23, 8, 0x1);           //Set the pixel clock divisor (PCD).
     u32 val = 0;
     writel(setvalue(val, 7, 8, d->pixel_clk_div) | setvalue(val, 23, 8, d->logic_clk_div), &d->dispc->divisor);
 
     dssmsg(" DSI configure DISPC clocks is done........ ok");
 }
 
-int vc_enable(const int channel, int enable)
+int vc_enable(const int channel, bool enable)
 {
     u32 *vc_ctrl = (u32*)(DSI_PROTOCOL_ENGINE_BASE + 0x100 + 0x20 * channel);
-    enable = enable ? 1 : 0;
 
-    r32setv(vc_ctrl, VC_EN, 1, enable);
+    r32setv(vc_ctrl, VC_EN, 1, (u32)enable);
 
-    if(wait_for_bit(vc_ctrl, VC_EN, 1, enable, 100000)) {
+    if(wait_for_bit(vc_ctrl, VC_EN, 1, (u32)enable, 100000)) {
 #ifdef DSS_ERROR_OUTPUT
                     printf("ERROR: Failed to set dsi_vc%d_enable to %d!\n", channel, enable);
                     printf("DSI_VC%d_CTRL = 0x%x\n", channel, readl(vc_ctrl));
@@ -500,14 +535,13 @@ int vc_enable(const int channel, int enable)
     return 0;
 }
 
-int dsi_if_enable(int enable)
+int dsi_if_enable(bool enable)
 {
     struct dsi_engine_registers* dsi = (struct dsi_engine_registers*)DSI_PROTOCOL_ENGINE_BASE;
-    enable = enable ? 1 : 0;
 
-    r32setv(&dsi->ctrl, IF_EN, 1, enable);
+    r32setv(&dsi->ctrl, IF_EN, 1, (u32)enable);
 
-    if(wait_for_bit(&dsi->ctrl, IF_EN, 1, enable, 100000)) {
+    if(wait_for_bit(&dsi->ctrl, IF_EN, 1, (u32)enable, 100000)) {
                             dsserr("Failed to set IF_EN to enable/disable");
                             printf("\tDSI_CTRL is 0x%x\n", readl(&dsi->ctrl));
                             return 1;
@@ -519,17 +553,17 @@ int dsi_if_enable(int enable)
     return 0;
 }
 
-int dsi_complexio_init(void)
+int dsi_complexio_init(struct orion_display* d)
 {
-    struct dsi_engine_registers* dsi = (struct dsi_engine_registers*)DSI_PROTOCOL_ENGINE_BASE;
-    struct dsi_phy_registers*    phy = (struct dsi_phy_registers*)DSI_PHY_BASE;
+//    struct dsi_engine_registers* dsi = (struct dsi_engine_registers*)DSI_PROTOCOL_ENGINE_BASE;
+//    struct dsi_phy_registers*    phy = (struct dsi_phy_registers*)DSI_PHY_BASE;
 
-    r32setv(&dsi->clk_ctrl, 14, 1, 1);      // CIO_CLK_ICG, enable L3 clk to CIO
-    readl(&phy->register5);
+    r32setv(&d->dctrl.dsi->clk_ctrl, 14, 1, 1);      // CIO_CLK_ICG, enable L3 clk to CIO
+    readl(&d->dctrl.phy->register5);
 
-    if(wait_for_bit(&phy->register5, 30, 1, 1, 100000)) {
+    if(wait_for_bit(&d->dctrl.phy->register5, 30, 1, 1, 100000)) {
 				dsserr("ComplexIO PHY not coming out of reset!");
-                                printf("\tDSI_PHY_REGISTERr5 = 0x%x\n", readl(&phy->register5));
+                                printf("\tDSI_PHY_REGISTERr5 = 0x%x\n", readl(&d->dctrl.phy->register5));
                                 return 1;
     } /*else {
             dssmsg("ComplexIO PHY reset done... ok\n\tReset done for the SCP clock domain.");
@@ -540,63 +574,63 @@ int dsi_complexio_init(void)
 */
 //13.1  dsi_complexio_config
 
-    u32 val = readl(&dsi->complexio_cfg1);      //dsi.c   1429
-    setv32(&val, 2, 3, 2);
-    setv32(&val, 3, 1, 0);
-    setv32(&val, 6, 3, 1);
-    setv32(&val, 7, 1, 0);
-    setv32(&val, 10, 3, 3);
-    setv32(&val, 11, 1, 0);
+    u32 val = readl(&d->dctrl.dsi->complexio_cfg1);      //dsi.c   1429
+    setv32(&val, 2, 3,  d->complexio.clk_lane);	//clk_lane = 2
+    setv32(&val, 3, 1,  d->complexio.clk_pol);   // 0
+    setv32(&val, 6, 3,  d->complexio.data1_lane);// 1
+    setv32(&val, 7, 1,  d->complexio.data1_pol); // 0
+    setv32(&val, 10, 3, d->complexio.data2_lane);// 3
+    setv32(&val, 11, 1, d->complexio.data2_pol); // 0
 
-    writel(val/*0x2a200312*/, &dsi->complexio_cfg1);
+    writel(val/*0x2a200312*/, &d->dctrl.dsi->complexio_cfg1);
 
 //14.1  dsi_complexio_power(DSI_COMPLEXIO_POWER_ON);           1
 
-    r32setv(&dsi->complexio_cfg1, 28, 2, 1);        //state = 1
+    r32setv(&d->dctrl.dsi->complexio_cfg1, 28, 2, 1);        //state = 1
 
-    if(wait_for_bit(&dsi->complexio_cfg1, 26, 2, 1, 1000)) {
+    if(wait_for_bit(&d->dctrl.dsi->complexio_cfg1, 26, 2, 1, 1000)) {
                             dsserr("failed to set complexio power state to 1!");
-                            printf("\tDSI_COMPLEXIO_CFG1 = 0x%x\n", readl(&dsi->complexio_cfg1));
+                            printf("\tDSI_COMPLEXIO_CFG1 = 0x%x\n", readl(&d->dctrl.dsi->complexio_cfg1));
                             return 1;
     } //else
 //            dssmsg("complex I/O in ON state... ok");
 
-    if(wait_for_bit(&dsi->complexio_cfg1, 29, 1, 1, 100000)) {
+    if(wait_for_bit(&d->dctrl.dsi->complexio_cfg1, 29, 1, 1, 100000)) {
                             dsserr("ComplexIO not coming out of reset!");
-                            printf("\tDSI_COMPLEXIO_CFG1 = 0x%x\n", readl(&dsi->complexio_cfg1));
+                            printf("\tDSI_COMPLEXIO_CFG1 = 0x%x\n", readl(&d->dctrl.dsi->complexio_cfg1));
                             return 1;
     } //else
 //            dssmsg("Resetcomplex I/O completed... ok");
 
-    if(wait_for_bit(&dsi->complexio_cfg1, 21, 1, 1, 100000)) {
+    if(wait_for_bit(&d->dctrl.dsi->complexio_cfg1, 21, 1, 1, 100000)) {
                             dsserr("ComplexIO LDO power supply is down!");
-                            printf("\tDSI_COMPLEXIO_CFG1 = 0x%x\n", readl(&dsi->complexio_cfg1));
+                            printf("\tDSI_COMPLEXIO_CFG1 = 0x%x\n", readl(&d->dctrl.dsi->complexio_cfg1));
                             return 1;
     } //else
 //            dssmsg("ComplexIO LDO power supply is up... ok");
 
 //15.1  dsi_complexio_timings()
 
-    val = readl(&phy->register0);
+    val = readl(&d->dctrl.phy->register0);
     setv32(&val, 31, 8, 0x0c);
     setv32(&val, 23, 8, 0x1b);
     setv32(&val, 15, 8, 0x0e);
     setv32(&val, 7, 8, 0x15);
 
-    writel(val, &phy->register0);   //0x0c1b0e15
+    writel(val, &d->dctrl.phy->register0);   //0x0c1b0e15
 
-    val = readl(&phy->register1);
+    val = readl(&d->dctrl.phy->register1);
 //      setv32(&val, 31, 8, 0x0c);
     setv32(&val, 22, 7, 0x04);
     setv32(&val, 15, 8, 0x0b);
     setv32(&val, 7, 8, 0x25);
 
-    writel(val, &phy->register1);   //0x42040b25
+    writel(val, &d->dctrl.phy->register1);   //0x42040b25
 
-    val = readl(&phy->register2);
+    val = readl(&d->dctrl.phy->register2);
     setv32(&val, 7, 8, 0x09);
 
-    writel(val, &phy->register2);   //0xb8000009
+    writel(val, &d->dctrl.phy->register2);   //0xb8000009
 
     if(dsi_if_enable(ENABLE))
                 return 1;
@@ -604,7 +638,7 @@ int dsi_complexio_init(void)
     if(dsi_if_enable(DISABLE))
                 return 1;
 
-    r32setv(&dsi->clk_ctrl, 20, 1, 1);
+    r32setv(&d->dctrl.dsi->clk_ctrl, 20, 1, 1);
 
     if(dsi_if_enable(ENABLE))
                 return 1;
@@ -617,20 +651,20 @@ int dsi_complexio_init(void)
     return 0;
 }
 
-void dsi_proto_timings(void)
+void dsi_proto_timings(struct orion_display* d)
 {
-    struct dsi_engine_registers* dsi = (struct dsi_engine_registers*)DSI_PROTOCOL_ENGINE_BASE;
+//    struct dsi_engine_registers* dsi = (struct dsi_engine_registers*)DSI_PROTOCOL_ENGINE_BASE;
 
-    writel(0x0000130f, &dsi->clk_timing);
-    writel(0x000b000c, &dsi->vm_timing7);
+    writel(0x0000130f, &d->dctrl.dsi->clk_timing);
+    writel(0x000b000c, &d->dctrl.dsi->vm_timing7);
 }
 
-void dsi_set_lp_clk_divisor(void)
+void dsi_set_lp_clk_divisor(struct orion_display* d)
 {
-    struct dsi_engine_registers* dsi = (struct dsi_engine_registers*)DSI_PROTOCOL_ENGINE_BASE;
+//    struct dsi_engine_registers* dsi = (struct dsi_engine_registers*)DSI_PROTOCOL_ENGINE_BASE;
 
-    r32setv(&dsi->clk_ctrl, 12, 13, 0x8);   //LP_CLK_DIVISOR
-    r32setv(&dsi->clk_ctrl, 21, 1, 0x1);    //LP_RX_SYNCHRO_ENABLE
+    r32setv(&d->dctrl.dsi->clk_ctrl, LP_CLK_DIVISOR, 13, 0x8);
+    r32setv(&d->dctrl.dsi->clk_ctrl, LP_RX_SYNCHRO_ENABLE, 1, (u32)ENABLE);
 }
 
 void vc_initial_config(const int channel)
@@ -726,7 +760,7 @@ int init_dsi(struct orion_display* d)
     dsi_core_init(d);
     dsi_initialize_irq(d);
 
-    if(dsi_pll_init())
+    if(dsi_pll_init(d))
 				return 1;
 
     if(dsi_configure_dsi_clocks(d))
@@ -740,20 +774,15 @@ int init_dsi(struct orion_display* d)
 
     dsi_configure_dispc_clocks(d);
 
-    if(dsi_complexio_init()) {
+    if(dsi_complexio_init(d)) {
             dsserr("don't complete dsi_complexio_init()");
             return 1;
     }
 
-    dsi_proto_timings();
-    dsi_set_lp_clk_divisor();
+    dsi_proto_timings(d);
+    dsi_set_lp_clk_divisor(d);
     dsi_proto_config();
-/*
-    if(vc_enable(0, ENABLE)) {
-                dsserr("don't complete vc_enable(0, ENABLE) in <display_init_dsi>!");
-                return;
-    }
-*/
+
     if(dsi_if_enable(ENABLE)) {
                 dsserr("don't complete dsi_if_enable(ENABLE) in <dsi_if_enable>");
                 return 1;
