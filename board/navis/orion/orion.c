@@ -90,7 +90,7 @@ static void vaux4_on()
 
     void * pcio1 = (void *)0x48002448;
 
-    printf("VAUX4 Init ...");
+    printf("VAUX4 Init   ...");
     /* set VAUX4 to 2.5V */
     byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
     twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
@@ -109,37 +109,33 @@ static void vaux4_on()
     printf(" done.\n");
 }
 
-extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
-static void dsi_tmp_reset_fix()
+#define gpio180_bit			20
+#define GPIO_OE_bank6			0x49058034
+#define GPIO_DATAOUT_bank6		0x4905803C
+
+static inline void reset_for_dsi(void)
 {
-    /* Check if we have VAUX3 pwr running */
+    r32setv(GPIO_OE_bank6,      gpio180_bit, 1, 0);		//GPIO6 GPIO_OE - to out
+    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 0);		//OFF
+    udelay(1000);
+    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 1);		//ON
+}
 
-    u8 byte, val1, val2;
-
-    twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val1,
-            TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
-    twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val2,
-            TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
-
+static void vaux3_on()
+{
+    u8 byte;
+    
+    printf("VAUX3 Init   ...");
+    
     byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
     twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
             TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
-
     byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
     twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
             TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
 
-    if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
-            val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
-    {
-
-        printf("No VAUX3 active. Switch ON and reset.\n");
-        do_reset(NULL, 0, 0, NULL);
-
-        printf("Reset error???\n");
-    }
-    else
-        printf("Active VAUX3 found. Go ahead.\n");
+    reset_for_dsi();
+    printf(" done.\n");
 }
 
 
@@ -556,15 +552,19 @@ static void set_picture_to_display(void)
 
     if(panel_init()) {
 //	if(panel_init())
-		puts("ERROR: panel don't init!\n");
+		puts("DSS ERROR: panel don't init!\n");
 		return;
     }
 
+    puts("Panel Init   ... done.\n");
+
     if(panel_update()) {
 //        if(panel_update())
-        puts("ERROR: panel don't update!\n");
+        puts("DSS ERROR: panel don't update!\n");
         return;
     }
+
+    puts("Panel Update ... done.\n");
 }
 
 /*
@@ -573,11 +573,9 @@ static void set_picture_to_display(void)
  */
 int misc_init_r(void)
 {
-//check_accum();
 #ifdef CONFIG_DRIVER_OMAP34XX_I2C
-    dsi_tmp_reset_fix();
+    vaux3_on();
     set_picture_to_display();
-
     /*
      * We have to enable this VAUX4 LDO since there's a buggy chip
      * in i2c-2 on this board that needs this power.
