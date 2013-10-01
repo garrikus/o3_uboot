@@ -210,7 +210,8 @@
 		"rootfstype=ext2 rootwait\0" \
 	"nandargs=setenv bootargs console=${console} " \
 		"root=/dev/mtdblock4 rw " \
-		"rootfstype=jffs2\0" \
+		"rootfstype=jffs2 " \
+		"omapfb.test=y\0" \
 	"loadbootscript=fatload mmc 0 ${loadaddr} boot.scr\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source ${loadaddr}\0" \
