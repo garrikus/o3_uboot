@@ -18,7 +18,7 @@ static void draw_string(int x, int line, unsigned char* points, int len)
             else
                 color = 0;
 
-                y = 360 * (line - 1) + 1;
+                y = 480 * (line - 1) + 1;
                 dot = y + x, x++;
                 offset = 4 * (dot - 1);
                 addr = 0x8fc00000 + offset;

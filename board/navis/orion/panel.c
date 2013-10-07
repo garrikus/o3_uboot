@@ -199,6 +199,26 @@ int panel_init(void)
     return 0;
 }
 
+static void dispc_set_plane(bool enable)
+{
+    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
+
+    r32setv(&dispc->gfx_attributes, 0, 1, (u32)enable);
+}
+
+int dispc_go(void)
+{
+    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
+
+    r32setv(&dispc->control, 9, 2, 0x3);
+    r32setv(&dispc->control, 0, 1, 1);          //enable lcd
+    r32setv(&dispc->control, 3, 1, 1);
+    wait_for_bit(&dispc->control, 5, 1, 0, 100000);
+    r32setv(&dispc->control, 5, 1, 1);          //go lcd
+
+    return 0;
+}
+
 int prepare_update(void)
 {
     struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
@@ -208,7 +228,7 @@ int prepare_update(void)
 // configure_overlay(OMAP_DSS_GFX = 0)
 // enable_plane        dispc->gfx_attributes[0]
 // dispc_set_color_mode(plane = 0, color_mode = 0x80)
-    r32setv(&dispc->gfx_attributes, 4, 4, 0x9);		//GFXFORMAT
+    r32setv(&dispc->gfx_attributes, 4, 4, 0x8);		//GFXFORMAT
 // dispc_set_plane_ba0(plane = 0, paddr(0x8fc00000) + offset0(0));
     writel(0x8fc00000, &dispc->gfx_ba0);			//video_mem_addr
 // dispc_set_plane_ba1(plane, paddr + offset1)
@@ -225,7 +245,7 @@ int prepare_update(void)
     r32setv(&dispc->gfx_size, 26, 11, 800 - 1);
 // dispc_set_rotation_attrs(plane = 0, rotation = 0, mirror = 0, color_mode = 0x80)
     r32setv(&dispc->gfx_attributes, 13, 2, 0);
-    r32setv(&dispc->gfx_attributes, 18, 1, 0);
+    r32setv(&dispc->gfx_attributes,  8, 1, 0);
 // if(plane != OMAP_DSS_VIDEO1) dispc_setup_global_alpha(plane, global_alpha = 0xff);
     writel(0xff, &dispc->global_alpha);
 // end of dispc_setup_plane ---------------------------------------------------------
@@ -237,7 +257,11 @@ int prepare_update(void)
     r32setv(&dispc->gfx_fifo_threshold, 27, 12, 896);
     r32setv(&dispc->gfx_fifo_threshold, 11, 12, 960);
 // dispc_enable_plane(plane, 1)
-    r32setv(&dispc->gfx_attributes, 0, 1, 1);
+    
+    
+//    dispc_set_plane(ENABLE);
+
+
 // end of configure_overlay(plane) 	OMAP_DSS_GFX = 0 ---------------------------
 // configure_manager(OMAP_DSS_CHANNEL_LCD = 0)
 // dispc_set_default_color(channel, c->default_color = 0)
@@ -251,14 +275,18 @@ int prepare_update(void)
     r32setv(&dispc->config, 18, 1, 0);
 // end of configure_manager(channel) ----------------------------------------------  
 // dispc_go(OMAP_DSS_CHANNEL_LCD = 0)
-    r32setv(&dispc->control, 0, 1, 1);		//enable lcd
-    r32setv(&dispc->control, 5, 1, 1);		//go lcd
+    
+//    r32setv(&dispc->control, 9, 2, 0x3);
+//    r32setv(&dispc->control, 0, 1, 1);		//enable lcd
+//    r32setv(&dispc->control, 5, 1, 1);		//go lcd
+
 // end of configure_dispc() -------------------------------------------------------
 // dispc_set_lcd_size(*w, *h);
     r32setv(&dispc->size_lcd, 26, 11, 800 - 1);
     r32setv(&dispc->size_lcd, 10, 11, 480 - 1);
 
-
+dispc_set_plane(ENABLE);
+dispc_go();
 
 // taal_set_update_window(x = 0, y = 0, w = 480, h = 800)
 

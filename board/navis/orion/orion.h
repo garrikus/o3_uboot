@@ -23,9 +23,15 @@
 #ifndef _ORION_H_
 #define _ORION_H_
 
+#define ORION3_BOARD
+
 const omap3_sysinfo sysinfo = {
 	DDR_DISCRETE,
-	"Orion board",
+#if defined(ORION3_BOARD)
+	"Orion-3 board",
+#else
+	"Orion-2 board",
+#endif
 #if defined(CONFIG_ENV_IS_IN_ONENAND)
 	"OneNAND",
 #else
