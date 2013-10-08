@@ -194,7 +194,7 @@
 #define CONFIG_JFFS2_DEV		"nand0"
 /* start of jffs2 partition */
 #define CONFIG_JFFS2_PART_OFFSET	0x00780000
-#define CONFIG_JFFS2_PART_SIZE		0x3f880000	/* sz of jffs2 part */
+#define CONFIG_JFFS2_PART_SIZE		0xf50000//0x3f880000	/* sz of jffs2 part */
 
 /* Environment information */
 #define CONFIG_BOOTDELAY	2

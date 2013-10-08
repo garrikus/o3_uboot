@@ -134,7 +134,7 @@ static inline void reset_for_dsi(void)
     udelay(130000);
 }
 
-static void vaux3_on()
+static void vaux3_on(void)
 {
     u8 byte;
     
@@ -578,6 +578,27 @@ static void set_picture_to_display(void)
     }
 
     puts("Panel Update ... done.\n");
+
+    symbol str1[4] = {
+               {&t[0][0], 20, 27, 3},
+	       {&e[0][0], 20, 27, 3},
+	       {&s[0][0], 20, 27, 3},
+	       {&t[0][0], 20, 27, 3}
+    };
+
+//    frame_reset();
+//    string_to_frame(150, 100, str1, 4);
+
+    char* argstr[] = {"do_nand", "read", "0x8fc00000", "0x3ec80000", "0x177000"};
+    do_nand(NULL, 0, 5, argstr);
+    panel_update();
+//    int time = 5000;
+//    while(time--) udelay(1000);
+    
+//    char* argst[] = {"do_nand", "read", "0x8fc00000", "0x3ef80000", "0x177000"};
+    
+    argstr[3] = "0x3ee00000";//"0x3ef80000";
+    do_nand(NULL, 0, 5, argstr);
 }
 
 /*
