@@ -109,16 +109,29 @@ static void vaux4_on()
     printf(" done.\n");
 }
 
-#define gpio180_bit			20
-#define GPIO_OE_bank6			0x49058034
-#define GPIO_DATAOUT_bank6		0x4905803C
-
 static inline void reset_for_dsi(void)
 {
-    r32setv(GPIO_OE_bank6,      gpio180_bit, 1, 0);		//GPIO6 GPIO_OE - to out
-    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 0);		//OFF
-    udelay(1000);
-    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 1);		//ON
+	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
+
+    /* Make GPIO 180 as output pin */
+    writel(readl(&gpio6_base->oe) & ~(GPIO20), &gpio6_base->oe);
+
+    /*
+     *  Now send a pulse on the GPIO pin
+     *
+     *  For hardware reset timings see
+     *  HX8369-A-DS datasheet. It suggests
+     *  t_resw = 10usec (min)
+     *  t_rest = 120msec (max)
+     *  We give a bit more.
+     */
+
+    writel(GPIO20, &gpio6_base->setdataout);
+    udelay(20);
+    writel(GPIO20, &gpio6_base->cleardataout);
+    udelay(20);
+    writel(GPIO20, &gpio6_base->setdataout);
+    udelay(130000);
 }
 
 static void vaux3_on()
