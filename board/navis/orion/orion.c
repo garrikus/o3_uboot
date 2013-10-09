@@ -109,9 +109,21 @@ static void vaux4_on()
     printf(" done.\n");
 }
 
+#if defined(ORION3_BOARD)
+/*
+#define gpio180_bit			20
+#define GPIO_OE_bank6			0x49058034
+#define GPIO_DATAOUT_bank6		0x4905803C
+*/
 static inline void reset_for_dsi(void)
 {
-	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
+/*
+    r32setv(GPIO_OE_bank6,      gpio180_bit, 1, 0);		//GPIO6 GPIO_OE - to out
+    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 0);		//OFF
+    udelay(1000);
+    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 1);		//ON
+*/
+    struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
 
     /* Make GPIO 180 as output pin */
     writel(readl(&gpio6_base->oe) & ~(GPIO20), &gpio6_base->oe);
@@ -137,9 +149,9 @@ static inline void reset_for_dsi(void)
 static void vaux3_on(void)
 {
     u8 byte;
-    
+
     printf("VAUX3 Init   ...");
-    
+
     byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
     twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
             TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
@@ -150,7 +162,38 @@ static void vaux3_on(void)
     reset_for_dsi();
     printf(" done.\n");
 }
+#else
+extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+static void vaux3_on(void)
+{
+    /* Check if we have VAUX3 pwr running */
 
+    u8 byte, val1, val2;
+
+    twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val1,
+              TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
+    twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val2,
+              TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+
+    byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+              TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
+
+    byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+              TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+
+    if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+              val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
+    {
+          printf("No VAUX3 active. Switch ON and reset.\n");
+          do_reset(NULL, 0, 0, NULL);
+
+          printf("Reset error???\n");
+    } else
+          printf("Active VAUX3 found. Go ahead.\n");
+}
+#endif
 
 void frame_reset(void);
 void sym_to_frame(int, int, symbol*);
@@ -158,7 +201,7 @@ void string_to_frame(int, int, symbol*, int);
 int panel_init(void);
 int panel_update(void);
 
-static void set_picture_to_display(void)
+static void set_string_to_display(void)
 {
     frame_reset();
 
@@ -560,45 +603,47 @@ static void set_picture_to_display(void)
     sym_to_frame(258, 170, &tt);     //32
     sym_to_frame(272, 170, &tt);     //14
     sym_to_frame(286, 170, &tt);     //14
+}
 
-    udelay(5000);
+#define FRAME_ADDR		"0x8fc00000"
+#define IMG1_ADDR		"0x3ec80000"
+#define IMG2_ADDR               "0x3ee00000"
+#define IMG3_ADDR               "0x3ef80000"
+#define IMG4_ADDR               "0x3f100000"
+#define SIZE_OF_IMG             "0x177000"
+
+static void set_picture_to_display(void)
+{
+    udelay(5000);		// by 1000 it works but has low bright
 
     if(panel_init()) {
-//	if(panel_init())
-		puts("DSS ERROR: panel don't init!\n");
-		return;
+	puts("DSS ERROR:  panel don't init!\n");
+	return;
     }
 
     puts("Panel Init   ... done.\n");
 
+    int img_exist = 1;
+    char* argstr[] = {"do_nand", "read", FRAME_ADDR, IMG1_ADDR, SIZE_OF_IMG};
+
+    if(img_exist) {
+	/* load_pic_to_frame */
+	do_nand(NULL, 0, 5, argstr);
+    } else
+	set_string_to_display();
+
     if(panel_update()) {
-//        if(panel_update())
-        puts("DSS ERROR: panel don't update!\n");
-        return;
+	puts("DSS ERROR:  panel don't update!\n");
+	return;
     }
 
     puts("Panel Update ... done.\n");
 
-    symbol str1[4] = {
-               {&t[0][0], 20, 27, 3},
-	       {&e[0][0], 20, 27, 3},
-	       {&s[0][0], 20, 27, 3},
-	       {&t[0][0], 20, 27, 3}
-    };
-
-//    frame_reset();
-//    string_to_frame(150, 100, str1, 4);
-
-    char* argstr[] = {"do_nand", "read", "0x8fc00000", "0x3ec80000", "0x177000"};
-    do_nand(NULL, 0, 5, argstr);
-    panel_update();
-//    int time = 5000;
-//    while(time--) udelay(1000);
-    
-//    char* argst[] = {"do_nand", "read", "0x8fc00000", "0x3ef80000", "0x177000"};
-    
-    argstr[3] = "0x3ee00000";//"0x3ef80000";
-    do_nand(NULL, 0, 5, argstr);
+    if(img_exist) {
+	/* load_pic_to_frame */
+	argstr[3] = IMG2_ADDR;
+	do_nand(NULL, 0, 5, argstr);
+    }
 }
 
 /*
@@ -623,7 +668,6 @@ int misc_init_r(void)
 #if defined(CONFIG_CMD_NET)
 	setup_net_chip();
 #endif
-
 	dieid_num_r();
 
 	return 0;

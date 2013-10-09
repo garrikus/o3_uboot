@@ -431,6 +431,83 @@ struct orion_display {
 	} complexio;
 };
 
+struct orion_graphics {
+	struct display_controller_registers *dispc;
+	struct dsi_engine_registers         *dsi;
+
+	enum colormode {
+		BITMAP1,
+		BITMAP2,
+		BITMAP4,
+		BITMAP8,
+		RGB12,
+		ARGB16,
+		RGB16,
+		RGB24 = 0x8,
+		RGB24pack24,
+		ARGB32 = 0xc,
+		RGBA32,
+		RGBx32
+	} gfx_format;
+
+	unsigned plane_addr;		//0x8fc00000
+	unsigned row_inc;
+	unsigned pix_inc;
+
+	struct plane_position {
+		unsigned x;
+		unsigned y;
+	} gfx_position;
+
+	struct size {
+		unsigned width;
+		unsigned height;
+	} pic_size;
+
+	enum rotation {
+		none,
+		rot_angle90,
+		rot_angle180,
+		rot_angle270
+	} gfx_rotation;
+
+	enum gfxchannelout {
+		lcd,
+		out24
+	} gfx_channel;
+
+	u8 global_alpha;
+	bool gfx_replication;
+
+	enum burst {
+		bursts_4x32bit,
+		bursts_8x32bit,
+		bursts_16x32bit,
+	} burst_size;
+
+	struct threshold {
+		unsigned high;
+		unsigned low;
+	} fifo_threshold;
+
+	unsigned default_color;
+	unsigned update_channel;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
 struct orion_device {
 	struct dsi_engine_registers* dsi;

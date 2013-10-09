@@ -71,7 +71,6 @@ int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
     if(strcmp (argv[1], "img") == 0) {
 		fname_ptr = bin_names[repeat];
                 what_id   = repeat;
-//		do_sd2n();
     }
 
     if (fname_ptr == 0x00){
@@ -171,7 +170,7 @@ int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	if(repeat == 7)
 		repeat = 4;
-	else {
+	else if(strcmp (argv[1], "img") == 0) {
 		char* s[] = {"do_sd2n", "img", "force"};
 		repeat++;
 		do_sd2n(NULL, 0, 3, s);
