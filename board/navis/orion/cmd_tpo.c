@@ -2,7 +2,6 @@
 #include <asm/io.h>
 #include <asm/arch-omap3/sys_proto.h>
 
-
 #ifdef CONFIG_SYS_HUSH_PARSER
 #include <hush.h>
 #endif
@@ -434,4 +433,93 @@ U_BOOT_CMD(
 	test_runlin,	1,		1,	do_test_runlin,
 	"boot Linux in test mode",
 	""
+);
+
+extern char* img_magic;
+int do_img(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+    if(argc < 2)
+            goto usage;
+
+    char* cmd = argv[1];
+
+    if(strncmp(cmd, "magic", 5) == 0) {
+	if(argc < 3)
+		goto usage;
+
+	if(strncmp(argv[2], "check", 5) == 0) {
+		unsigned bytes;
+		char* s[] = {"do_nand", "read", "0x80000000", "0x3ec60000", "0x20000"};
+
+		do_nand(NULL, 0, 5, s);
+		bytes = readl(simple_strtoul(s[2], NULL, 16));
+
+		printf("%s: 0x%x\n", bytes == simple_strtoul(img_magic, NULL, 16) ? \
+		       "The magic is the same" : "The magic does not match", bytes);
+	} else if(strncmp(argv[2], "write", 5) == 0) {
+		char* s[] = {"do_mem_mw", "0x80000000", img_magic, "", ""}; //char* img_magic = 0xaf7254db
+
+		if(argc > 3)
+			s[2] = argv[3];
+
+		do_mem_mw(NULL, 0, 3, s);  
+		s[0] = "do_nand";
+		s[1] = "erase"; 
+		s[2] = "0x3ec60000";
+		s[3] = "0x20000";
+		do_nand(NULL, 0, 4, s);
+		s[1] = "write"; 
+		s[2] = "0x80000000";
+		s[3] = "0x3ec60000";
+		s[4] = "0x20000";
+		do_nand(NULL, 0, 5, s);
+	}
+    } else if(strncmp(cmd, "show", 4) == 0) {
+		if(argc < 3)
+	                goto usage;
+
+		char* s[] = {"do_nand", "read", "0x8fc00000", "0x3ec80000", "0x180000"};
+
+		if(strncmp(argv[2], "2", 1) == 0) s[3] = "3ee00000";
+		else if(strncmp(argv[2], "3", 1) == 0) s[3] = "3ef80000";
+		else if(strncmp(argv[2], "4", 1) == 0) s[3] = "3f100000";
+		else if(strncmp(argv[2], "0x", 2) == 0) s[3] = argv[2];
+		else goto usage;
+
+		do_nand(NULL, 0, 5, s);
+		panel_update();
+    }
+
+    return 0;
+
+usage:
+        cmd_usage(cmdtp);
+	return 1;
+}
+
+U_BOOT_CMD(
+	img,	4,		1,	do_img,
+	"operation with Image",
+	"magic check - reads from NAND image magic number and checks him\n"
+	"img magic write [magicnumber] - writes image magic number to NAND\n"
+	"img show <img number/address> - reads image from NAND and output to LCD\n"
+);
+
+
+int do_display_update(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+    if(panel_update()) {
+            puts("DSS ERROR:  panel don't update!\n");
+	    return 1;
+    }
+
+    puts("Panel Update ... done.\n");
+			    
+    return 0;
+}
+
+U_BOOT_CMD(
+        display_update,  1,              1,      do_display_update,
+        "update the display",
+        ""
 );

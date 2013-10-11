@@ -7,7 +7,6 @@
 #include <nand.h>
 
 
-
 #define SRAM_ADDR4IMAGE 0x80000000UL
 
 /* XXX: This is wrong in a way. Should be retrieved from MTD subsystem. */
@@ -22,10 +21,10 @@ static struct nand_part_map {
     {0x00080000, 0x001c0000}, /* U-boot       */
     {0x00280000, 0x00500000}, /* Linux kernel */
     {0x00780000, 0x3e500000},//3f880000}  /* rootfs image */
-    {0x3ec80000, 0x180000},
-    {0x3ee00000, 0x180000},
-    {0x3ef80000, 0x180000},
-    {0x3f100000, 0x180000}
+    {0x3ec80000, 0x00180000}, /* img1 */
+    {0x3ee00000, 0x00180000}, /* img2 */
+    {0x3ef80000, 0x00180000}, /* img3 */
+    {0x3f100000, 0x00180000}  /* img4 */
 };
 
 int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
@@ -168,18 +167,33 @@ int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	    return 1;
 	}
 
-	if(repeat == 7)
+	if(repeat == 7) {
 		repeat = 4;
-	else if(strcmp (argv[1], "img") == 0) {
-		char* s[] = {"do_sd2n", "img", "force"};
-		repeat++;
-		do_sd2n(NULL, 0, 3, s);
+		
+		extern char* img_magic;
+		char* s[] = {"do_mem_mw", "0x80000000", img_magic, "", ""};
+
+		do_mem_mw(NULL, 0, 3, s);
+		s[0] = "do_nand";
+		s[1] = "erase";
+		s[2] = "0x3ec60000";
+		s[3] = "0x20000";
+		do_nand(NULL, 0, 4, s);
+		s[1] = "write";
+		s[2] = "0x80000000";
+		s[3] = "0x3ec60000";
+		s[4] = "0x20000";
+		do_nand(NULL, 0, 5, s);
+	} else
+		if(strcmp (argv[1], "img") == 0) {
+			char* s[] = {"do_sd2n", "img", "force"};
+			repeat++;
+			do_sd2n(NULL, 0, 3, s);
 	}
     }
 
     /* Done! */
     return 0;
-
 }
 
 U_BOOT_CMD(
