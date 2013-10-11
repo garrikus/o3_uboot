@@ -211,7 +211,7 @@
 	"nandargs=setenv bootargs console=${console} " \
 		"root=/dev/mtdblock4 rw " \
 		"rootfstype=jffs2 " \
-		"omapfb.test=y\0" \
+		"omapfb.skipupd=y\0" \
 	"loadbootscript=fatload mmc 0 ${loadaddr} boot.scr\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source ${loadaddr}\0" \
@@ -228,7 +228,7 @@
 	"sd2n_uImage=nandecc hw 1; sd2n uImage force\0"\
 	"sd2n_rootfs=nandecc hw 1; sd2n rootfs force\0"\
 	"sd2n_img=nandecc hw 1; sd2n img force\0"\
-	"sd2n_all=run sd2n_mlo; run sd2n_uboot; run sd2n_uImage; run sd2n_rootfs\0"\
+	"sd2n_all=run sd2n_mlo; run sd2n_uboot; run sd2n_uImage; run sd2n_rootfs; run sd2n_img\0"\
 
 #define CONFIG_BOOTCOMMAND \
 	"if mmc init; then " \
