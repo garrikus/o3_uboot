@@ -105,6 +105,8 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
 	/* we assume that the kernel is in place */
 	printf ("\nStarting kernel ...\n\n");
 
+	panel_update();
+
 #ifdef CONFIG_USB_DEVICE
 	{
 		extern void udc_disconnect (void);

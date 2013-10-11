@@ -21,17 +21,23 @@ static struct nand_part_map {
     {0x00000000, 0x00050000}, /* X-Loader MLO */
     {0x00080000, 0x001c0000}, /* U-boot       */
     {0x00280000, 0x00500000}, /* Linux kernel */
-    {0x00780000, 0x3f880000}  /* rootfs image */
+    {0x00780000, 0x3e500000},//3f880000}  /* rootfs image */
+    {0x3ec80000, 0x180000},
+    {0x3ee00000, 0x180000},
+    {0x3ef80000, 0x180000},
+    {0x3f100000, 0x180000}
 };
 
 int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
     int     force_flag = 0;
-    char *  bin_names[] = { "o_MLO", "o_u-boot.bin", "o_uImage", "o_rootfs" };
+    char *  bin_names[] = {"o_MLO", "o_u-boot.bin", "o_uImage", "o_rootfs",
+    			   "img1.raw", "img2.raw", "img3.raw", "img4.raw"};
     int     what_id;
     char *  fname_ptr;
     long    addr,count,filesize,wrsize; 
     size_t  length;
+    static int repeat = 4;
 
     block_dev_desc_t *dev_desc=NULL;
     nand_info_t *nand;
@@ -61,9 +67,14 @@ int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		    fname_ptr = 0x00;
 		    what_id   = -1;
 		}
+    
+    if(strcmp (argv[1], "img") == 0) {
+		fname_ptr = bin_names[repeat];
+                what_id   = repeat;
+    }
 
     if (fname_ptr == 0x00){
-	printf ("what? do you want (mlo,uboot,uImage,rootfs)\n");
+	printf ("what? do you want (mlo,uboot,uImage,rootfs,img)\n");
 	return 1;
     }
 
@@ -155,7 +166,15 @@ int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	{
 	    printf("Unable to program NAND\n");
 	    return 1;
-	};
+	}
+
+	if(repeat == 7)
+		repeat = 4;
+	else if(strcmp (argv[1], "img") == 0) {
+		char* s[] = {"do_sd2n", "img", "force"};
+		repeat++;
+		do_sd2n(NULL, 0, 3, s);
+	}
     }
 
     /* Done! */

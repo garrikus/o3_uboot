@@ -37,6 +37,8 @@
 #include <asm/mach-types.h>
 #include "orion.h"
 
+#include "font.h"
+
 static u8 omap3_evm_version;
 
 u8 get_omap3_evm_rev(void)
@@ -88,7 +90,7 @@ static void vaux4_on()
 
     void * pcio1 = (void *)0x48002448;
 
-    printf("VAUX4 Init ...");
+    printf("VAUX4 Init   ...");
     /* set VAUX4 to 2.5V */
     byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
     twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
@@ -107,175 +109,541 @@ static void vaux4_on()
     printf(" done.\n");
 }
 
+#if defined(ORION3_BOARD)
+/*
+#define gpio180_bit			20
+#define GPIO_OE_bank6			0x49058034
+#define GPIO_DATAOUT_bank6		0x4905803C
+*/
+static inline void reset_for_dsi(void)
+{
+/*
+    r32setv(GPIO_OE_bank6,      gpio180_bit, 1, 0);		//GPIO6 GPIO_OE - to out
+    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 0);		//OFF
+    udelay(1000);
+    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 1);		//ON
+*/
+    struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
+
+    /* Make GPIO 180 as output pin */
+    writel(readl(&gpio6_base->oe) & ~(GPIO20), &gpio6_base->oe);
+
+    /*
+     *  Now send a pulse on the GPIO pin
+     *
+     *  For hardware reset timings see
+     *  HX8369-A-DS datasheet. It suggests
+     *  t_resw = 10usec (min)
+     *  t_rest = 120msec (max)
+     *  We give a bit more.
+     */
+
+    writel(GPIO20, &gpio6_base->setdataout);
+    udelay(20);
+    writel(GPIO20, &gpio6_base->cleardataout);
+    udelay(20);
+    writel(GPIO20, &gpio6_base->setdataout);
+    udelay(130000);
+}
+
+static void vaux3_on(void)
+{
+    u8 byte;
+
+    printf("VAUX3 Init   ...");
+
+    byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+            TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
+    byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
+    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+            TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+
+    reset_for_dsi();
+    printf(" done.\n");
+}
+#else
 extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
-static void dsi_tmp_reset_fix()
+static void vaux3_on(void)
 {
     /* Check if we have VAUX3 pwr running */
 
     u8 byte, val1, val2;
 
     twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val1,
-            TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
+              TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
     twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val2,
-            TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+              TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
 
     byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
     twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
-            TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
+              TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
 
     byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
     twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
-            TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+              TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
 
     if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
-            val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
+              val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
     {
+          printf("No VAUX3 active. Switch ON and reset.\n");
+          do_reset(NULL, 0, 0, NULL);
 
-        printf("No VAUX3 active. Switch ON and reset.\n");
-        do_reset(NULL, 0, 0, NULL);
+          printf("Reset error???\n");
+    } else
+          printf("Active VAUX3 found. Go ahead.\n");
+}
+#endif
 
-        printf("Reset error???\n");
+void frame_reset(void);
+void sym_to_frame(int, int, symbol*);
+void string_to_frame(int, int, symbol*, int);
+int panel_init(void);
+int panel_update(void);
+
+static void set_string_to_display(void)
+{
+    frame_reset();
+
+    unsigned char a[27][3] = {
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {_______X,XXXXX___,________},
+        {_____XXX,XXXXXXX_,________},
+        {____XXX_,____XXXX,________},
+        {___XXX__,_____XXX,X_______},
+        {___XXX__,______XX,X_______},
+        {________,______XX,X_______},
+        {________,____XXXX,X_______},
+        {________,XXXXXXXX,X_______},
+        {______XX,XX____XX,X_______},
+        {___XXXX_,______XX,X_______},
+        {__XXX___,______XX,X_______},
+        {_XXX____,______XX,X_______},
+        {_XXX____,______XX,X_______},
+        {_XXX____,______XX,X_______},
+        {_XXX____,______XX,X_______},
+        {_XXX____,______XX,XX______},
+        {__XXXX__,____XXXX,XXX_____},
+        {____XXXX,XXXXXX__,_XXXXX__},
+        {______XX,XXXX____,___XXX__},
+        {0},
+        {0},
+        {0}
+    };
+
+    unsigned char z[27][3] = {
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {________,XXXXXX__,________},
+        {______XX,XXXXXXX_,________},
+        {_____XXX,_____XXX,________},
+        {____XXX_,______XX,X_______},
+        {____XXX_,______XX,X_______},
+        {________,______XX,X_______},
+        {________,____XXXX,________},
+        {_______X,XXXXXXX_,________},
+        {_______X,XXXXXX__,________},
+        {________,____XXXX,________},
+        {________,______XX,X_______},
+        {________,______XX,XX______},
+        {________,______XX,XX______},
+        {________,______XX,XX______},
+        {__XXX___,______XX,XX______},
+        {__XXX___,______XX,X_______},
+        {__XXX___,_____XXX,________},
+        {____XXX_,____XXX_,________},
+        {______XX,XXXXX___,________},
+        {0},
+        {0},
+        {0}
+    };
+
+    unsigned char g[27][3] = {
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {____XXXX,XXXXXXXX,XX______},
+        {____XXXX,XXXXXXXX,XX______},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {0},
+        {0},
+        {0}
+    };
+
+    unsigned char r[27][3] = {
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {____XXX_,___XXX__,________},
+        {____XXX_,_XXXXXXX,________},
+        {____XXXX,XX____XX,X_______},
+        {____XXXX,_______X,XX______},
+        {____XXX_,________,XXX_____},
+        {____XXX_,________,XXX_____},
+        {____XXX_,________,XXX_____},
+        {____XXX_,________,XXX_____},
+        {____XXX_,________,XXX_____},
+        {____XXX_,________,XXX_____},
+        {____XXX_,________,XXX_____},
+        {____XXX_,________,XXX_____},
+        {____XXXX,_______X,XX______},
+        {____XXXX,X_____XX,X_______},
+        {____XXXX,XXXXXXX_,________},
+        {____XXX_,__XXX___,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+    };
+
+    unsigned char u[27][3] = {
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {____XXX_,________,__XXX___},
+        {____XXX_,________,__XXX___},
+        {_____XXX,________,_XXX____},
+        {_____XXX,________,_XXX____},
+        {______XX,X_______,XXX_____},
+        {______XX,X_______,XXX_____},
+        {_______X,XX_____X,XX______},
+        {_______X,XX_____X,XX______},
+        {________,XXX___XX,X_______},
+        {________,XXX___XX,X_______},
+        {________,_XXX_XXX,________},
+        {________,__XXXXXX,________},
+        {________,___XXXX_,________},
+        {________,____XXX_,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,__XXX___,________},
+        {________,__XXX___,________},
+        {________,_XXX____,________},
+        {________,_XXX____,________},
+        {____XXX_,XXX_____,________},
+        {_____XXX,X_______,________}
+    };
+
+    unsigned char k[27][3] = {
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {____XXX_,________,XXX_____},
+        {____XXX_,_______X,XX______},
+        {____XXX_,______XX,X_______},
+        {____XXX_,_____XXX,________},
+        {____XXX_,____XXX_,________},
+        {____XXX_,___XXX__,________},
+        {____XXX_,__XXX___,________},
+        {____XXX_,_XXX____,________},
+        {____XXXX,XXX_____,________},
+        {____XXXX,XXXX____,________},
+        {____XXXX,X_XXX___,________},
+        {____XXXX,___XXX__,________},
+        {____XXX_,___XXX__,________},
+        {____XXX_,____XXX_,________},
+        {____XXX_,_____XXX,________},
+        {____XXX_,_____XXX,________},
+        {____XXX_,______XX,X_______},
+        {____XXX_,_______X,XX______},
+        {____XXX_,________,XXX_____},
+        {0},
+        {0},
+        {0}
+    };
+
+    unsigned char s[27][3] = {
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {________,_XXXXXXX,X_______},
+        {_______X,XXXXXXXX,XXX_____},
+        {______XX,X_______,_XXX____},
+        {_____XXX,________,__XXX___},
+        {____XXX_,________,__XXX___},
+        {____XXX_,________,__XXX___},
+        {____XXX_,________,__XXX___},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,__XXX___},
+        {_____XXX,________,__XXX___},
+        {______XX,X_______,_XXX____},
+        {_______X,XXXXXXXX,XXX_____},
+        {________,_XXXXXXX,X_______},
+        {0},
+        {0},
+        {0}
+    };
+
+    unsigned char i[27][3] = {
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {____XXX_,________,___XXX__},
+        {____XXX_,________,___XXX__},
+        {____XXX_,________,___XXX__},
+        {____XXX_,________,__XXXX__},
+        {____XXX_,________,_XXXXX__},
+        {____XXX_,________,XX_XXX__},
+        {____XXX_,_______X,X__XXX__},
+        {____XXX_,______XX,___XXX__},
+        {____XXX_,_____XX_,___XXX__},
+        {____XXX_,____XX__,___XXX__},
+        {____XXX_,___XX___,___XXX__},
+        {____XXX_,__XX____,___XXX__},
+        {____XXX_,_XX_____,___XXX__},
+        {____XXX_,XX______,___XXX__},
+        {____XXXX,X_______,___XXX__},
+        {____XXXX,________,___XXX__},
+        {____XXX_,________,___XXX__},
+        {____XXX_,________,___XXX__},
+        {____XXX_,________,___XXX__},
+        {0},
+        {0},
+        {0}
+    };
+
+    unsigned char t[27][3] = {
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {____XXXX,XXXXXXXX,XXXXX___},
+        {____XXXX,XXXXXXXX,XXXXX___},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {________,___XXX__,________},
+        {0},
+        {0},
+        {0}
+    };
+
+    unsigned char m[27][3] = {
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXXX,________,___XXXX_},
+        {____XXXX,X_______,__XXXXX_},
+        {____XXX_,XX______,_XX_XXX_},
+        {____XXX_,_XX_____,XX__XXX_},
+        {____XXX_,__XX___X,X___XXX_},
+        {____XXX_,___XX_XX,____XXX_},
+        {____XXX_,____XXX_,____XXX_},
+        {____XXX_,_____X__,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {0},
+        {0},
+        {0}
+    };
+
+    unsigned char y[27][3] = {
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXX_,________,____XXX_},
+        {____XXXX,XXXXX___,____XXX_},
+        {____XXXX,XXXXXXX_,____XXX_},
+        {____XXX_,_____XXX,____XXX_},
+        {____XXX_,_______X,X___XXX_},
+        {____XXX_,_______X,X___XXX_},
+        {____XXX_,_______X,X___XXX_},
+        {____XXX_,_______X,X___XXX_},
+        {____XXX_,_______X,X___XXX_},
+        {____XXX_,_____XXX,____XXX_},
+        {____XXXX,XXXXXXX_,____XXX_},
+        {____XXXX,XXXX____,____XXX_},
+        {0},
+        {0},
+        {0}
+    };
+
+    unsigned char e[27][3] = {
+        {0},
+        {0},
+        {0},
+        {0},
+        {0},
+        {________,_XXXXXXX,X_______},
+        {_______X,XXXXXXXX,XXX_____},
+        {______XX,X_______,_XXX____},
+        {_____XXX,________,__XXX___},
+        {____XXX_,________,__XXX___},
+        {____XXX_,________,__XXX___},
+        {____XXX_,________,__XXX___},
+        {____XXXX,XXXXXXXX,XXXXX___},
+        {____XXXX,XXXXXXXX,XXXXX___},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,________},
+        {____XXX_,________,__XXX___},
+        {_____XXX,________,__XXX___},
+        {______XX,X_______,_XXX____},
+        {_______X,XXXXXXXX,XXX_____},
+        {________,_XXXXXXX,X_______},
+        {0},
+        {0},
+        {0}
+    };
+
+    unsigned char dot[24][1] = {
+        {0}, {0}, {0}, {0}, {0},
+        {0}, {0}, {0}, {0}, {0},
+        {0}, {0}, {0}, {0}, {0},
+        {0}, {0}, {0}, {0}, {0},
+        {_XXXX___},
+        {XXXXXX__},
+        {XXXXXX__},
+        {_XXXX___},
+    };
+
+    symbol str[15] = {
+                {&z[0][0], 24, 27, 3},
+                {&a[0][0], 24, 27, 3},
+                {&g[0][0], 24, 27, 3},
+                {&r[0][0], 20, 27, 3},
+                {&u[0][0], 20, 27, 3},
+                {&z[0][0], 22, 27, 3},
+                {&k[0][0], 20, 27, 3},
+                {&a[0][0], 22, 27, 3},
+
+                {&s[0][0], 20, 27, 3},
+                {&i[0][0], 24, 27, 3},
+                {&s[0][0], 24, 27, 3},
+                {&t[0][0], 20, 27, 3},
+                {&e[0][0], 20, 27, 3},
+                {&m[0][0], 24, 27, 3},
+                {&y[0][0], 28, 27, 3}
+    };
+
+    string_to_frame(100, 100, str, 8);
+    string_to_frame(90, 170, str + 8, 7);
+
+    symbol tt = {&dot[0][0], 14, 24, 1};
+
+    sym_to_frame(258, 170, &tt);     //32
+    sym_to_frame(272, 170, &tt);     //14
+    sym_to_frame(286, 170, &tt);     //14
+}
+
+#define FRAME_ADDR		"0x8fc00000"
+#define IMG1_ADDR		"0x3ec80000"
+#define IMG2_ADDR               "0x3ee00000"
+#define IMG3_ADDR               "0x3ef80000"
+#define IMG4_ADDR               "0x3f100000"
+#define SIZE_OF_IMG             "0x177000"
+
+static void set_picture_to_display(void)
+{
+    udelay(5000);		// by 1000 it works but has low bright
+
+    if(panel_init()) {
+	puts("DSS ERROR:  panel don't init!\n");
+	return;
     }
-    else
-        printf("Active VAUX3 found. Go ahead.\n");
-}
 
-//#define I2C_ACCUM_DEBUG
+    puts("Panel Init   ... done.\n");
 
-static inline void shutdown()
-{
-    i2c_set_bus_num(0);
+    int img_exist = 1;
+    char* argstr[] = {"do_nand", "read", FRAME_ADDR, IMG1_ADDR, SIZE_OF_IMG};
 
-    twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P2_SW_EVENTS);
-    twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P3_SW_EVENTS);
-    twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, 0x01, TWL4030_PM_MASTER_P1_SW_EVENTS);
-}
+    if(img_exist) {
+	/* load_pic_to_frame */
+	do_nand(NULL, 0, 5, argstr);
+    } else
+	set_string_to_display();
 
+    if(panel_update()) {
+	puts("DSS ERROR:  panel don't update!\n");
+	return;
+    }
 
-static void check_accum()
-{
-#ifdef I2C_ACCUM_DEBUG
-	printf("\n   =========================================================================================	\n\n");
-#endif
+    puts("Panel Update ... done.\n");
 
-	if(i2c_get_bus_num() != 2 && i2c_set_bus_num(2) < 0)
-	{
-	    udelay (1000);
-	    
-	    if(i2c_set_bus_num(2) < 0)
-		    printf("\nAccess to I2C num 2 failed!\n");
-	}
-
-	if(i2c_get_bus_num() == 2)
-	{
-#ifdef I2C_ACCUM_DEBUG
-	    printf("Current I2C bus num is 2\n");
-#endif
-	    int error;
-
-	    if(!i2c_probe (0x55))
-	    {
-		uchar volt1, volt2;
-		uint  voltage = 0;
-		int i;
-
-		for(i = 0; i < 3; i++)
-		{
-		    if(!(error = smb_read(0x55, 0x09, &volt1)))
-		    {
-			voltage += (uint)volt1;
-			voltage <<= 8;
-			break;
-		    }
-		    else udelay (1000 + i * 10000);
-		}
-
-		for(i = 0; i < 3; i++)
-		{
-		    if(!(error = smb_read(0x55, 0x08, &volt2)))
-		    {
-			voltage |= (uint)volt2;
-			break;
-		    }
-		    else udelay (1000 + i * 10000);
-		}
-#ifdef I2C_ACCUM_DEBUG
-		printf("VALUE OF VOLTAGE ACCUM IS %d.%d V or 0x%02x\n", voltage/1000, voltage%1000, voltage);
-#else
-		printf("VALUE OF VOLTAGE ACCUM IS %d.%d V\n", voltage/1000, voltage%1000);
-#endif
-
-		if(voltage <= 3200)
-		{
-		    printf("\tRequires charging...\n");
-		
-		    if(!i2c_probe (0x09))
-		    {
-			uchar value;
-			
-			for(i = 0; i < 3; i++)
-			{
-			    if(!(error = smb_read(0x09, 0x04, &value)))
-								    break;
-			    else udelay (1000 + i * 10000);
-			}
-#ifdef I2C_ACCUM_DEBUG
-			printf("Value of register4 is = 0x%02x =\n", value);
-#endif
-			
-			if(!error)
-			{
-			    if(value & 0xC0)
-			    {
-				error = smb_write (0x09, 0x02, 0xFF);
-#ifdef I2C_ACCUM_DEBUG
-				if(!error)
-				     printf("REG2 was written\n");
-				else printf("REG2 isn't written... ERROR = %d\n", error);
-
-				if(!(error = smb_read(0x09, 0x02, &value)))
-				     printf("Value of register2 is = 0x%02x =\n", value);
-				else printf("register2 test of CHGR FAILED... ERROR = %d\n", error);
-#endif
-				error = smb_write (0x09, 0x01, 0xAF);
-#ifdef I2C_ACCUM_DEBUG
-				if(!error)
-				     printf("REG1 was written\n");
-				else printf("REG1 isn't written... ERROR = %d\n", error);
-
-				if(!(error = smb_read(0x09, 0x01, &value)))
-				     printf("Value of register1 is = 0x%02x =\n", value);
-				else printf("register1 test of CHGR FAILED... ERROR = %d\n", error);
-#endif
-				error = smb_write (0x09, 0x00, 0x61);
-#ifdef I2C_ACCUM_DEBUG
-				if(!error)
-				     printf("REG0 was written\n");
-				else printf("REG0 isn't written... ERROR = %d\n", error);
-
-				if(!(error = smb_read(0x09, 0x00, &value)))
-				     printf("Value of register0 is = 0x%02x =\n", value);
-				else printf("register0 test of CHGR FAILED... ERROR = %d\n", error);
-#endif
-			    }
-			    else
-			    {
-                    printf("\nSHUTDOWN!\n");
-                    shutdown();
-			    }
-			}
-			else printf("REG4 test of CHGR FAILED... ERROR = %d\n", error);
-		    }
-		    else printf("I2C TEST CHRG-CONTROLLER FAILED...\n");
-		}
-	    }
-	    else printf("I2C TEST FG FAILED...\n");
-	}
-	
-	if(i2c_get_bus_num()) i2c_set_bus_num(0);
-#ifdef I2C_ACCUM_DEBUG
-	printf("\n   =========================================================================================\n\n");
-#endif
+    if(img_exist) {
+	/* load_pic_to_frame */
+	argstr[3] = IMG2_ADDR;
+	do_nand(NULL, 0, 5, argstr);
+    }
 }
 
 /*
@@ -285,7 +653,8 @@ static void check_accum()
 int misc_init_r(void)
 {
 #ifdef CONFIG_DRIVER_OMAP34XX_I2C
-    dsi_tmp_reset_fix();
+    vaux3_on();
+    set_picture_to_display();
     /*
      * We have to enable this VAUX4 LDO since there's a buggy chip
      * in i2c-2 on this board that needs this power.
@@ -296,12 +665,9 @@ int misc_init_r(void)
     i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 #endif
 
-    check_accum();
-
 #if defined(CONFIG_CMD_NET)
 	setup_net_chip();
 #endif
-
 	dieid_num_r();
 
 	return 0;

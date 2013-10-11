@@ -1,15 +1,6 @@
-//#include <config.h>
-//#include <common.h>
-//#include <command.h>
-//#include <part.h>
-//#include <fat.h>
-//#include <mmc.h>
-//#include <nand.h>
-
-
 #include <twl4030.h>
 #include <asm/io.h>
-//#include <image.h>
+#include <asm/arch-omap3/sys_proto.h>
 
 
 #ifdef CONFIG_SYS_HUSH_PARSER
@@ -428,7 +419,7 @@ int do_test_runlin(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	strcat(s, " o2testmode\0");
 
-	const char str[strlen(s)];	//without this the string 's' is incorrect in 'setenv()'!
+	const char str[strlen(s)];	//without this string 's' is incorrect in 'setenv()'!
 
 	strcpy((char*)str, (const char*)s);
 	setenv("nandargs", (char*)str);
@@ -444,4 +435,3 @@ U_BOOT_CMD(
 	"boot Linux in test mode",
 	""
 );
-

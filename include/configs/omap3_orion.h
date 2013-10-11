@@ -194,7 +194,7 @@
 #define CONFIG_JFFS2_DEV		"nand0"
 /* start of jffs2 partition */
 #define CONFIG_JFFS2_PART_OFFSET	0x00780000
-#define CONFIG_JFFS2_PART_SIZE		0x3f880000	/* sz of jffs2 part */
+#define CONFIG_JFFS2_PART_SIZE		0x055a0000//0x3ec80000//0x3f880000	/* sz of jffs2 part */
 
 /* Environment information */
 #define CONFIG_BOOTDELAY	2
@@ -210,7 +210,8 @@
 		"rootfstype=ext2 rootwait\0" \
 	"nandargs=setenv bootargs console=${console} " \
 		"root=/dev/mtdblock4 rw " \
-		"rootfstype=jffs2\0" \
+		"rootfstype=jffs2 " \
+		"omapfb.test=y\0" \
 	"loadbootscript=fatload mmc 0 ${loadaddr} boot.scr\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source ${loadaddr}\0" \
@@ -226,6 +227,7 @@
 	"sd2n_uboot=nandecc hw 2; sd2n uboot force\0"\
 	"sd2n_uImage=nandecc hw 1; sd2n uImage force\0"\
 	"sd2n_rootfs=nandecc hw 1; sd2n rootfs force\0"\
+	"sd2n_img=nandecc hw 1; sd2n img force\0"\
 	"sd2n_all=run sd2n_mlo; run sd2n_uboot; run sd2n_uImage; run sd2n_rootfs\0"\
 
 #define CONFIG_BOOTCOMMAND \
