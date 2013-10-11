@@ -23,8 +23,6 @@
 #ifndef _ORION_H_
 #define _ORION_H_
 
-#define ORION3_BOARD
-
 const omap3_sysinfo sysinfo = {
 	DDR_DISCRETE,
 #if defined(ORION3_BOARD)
