@@ -163,6 +163,20 @@ static void vaux3_on(void)
     printf(" done.\n");
 }
 #else
+
+int boot_device_nand(void)
+{
+    u32* addr = (u32 *)(0x4020eff0);
+    int i;
+
+    for(i = 0; i < 4; i++, addr++) {
+		if(*addr != 0xafafafaf)
+				return 1;
+    }
+
+    return 0;
+}
+
 extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 static void vaux3_on(void)
 {
@@ -186,10 +200,12 @@ static void vaux3_on(void)
     if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
               val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
     {
-          printf("No VAUX3 active. Switch ON and reset.\n");
-          do_reset(NULL, 0, 0, NULL);
-
-          printf("Reset error???\n");
+	if(boot_device_nand()) {
+	  	printf("No VAUX3 active. Switch ON and reset.\n");
+          	do_reset(NULL, 0, 0, NULL);
+          	printf("Reset error???\n");
+	} else
+		printf("Active VAUX3 found. Go ahead.\n");
     } else
           printf("Active VAUX3 found. Go ahead.\n");
 }
