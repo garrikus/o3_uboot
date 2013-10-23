@@ -74,8 +74,13 @@ extern void dataflash_print_info(void);
 #define CONFIG_IDENT_STRING ""
 #endif
 
+#ifndef UBT_VERSION_ID
 const char version_string[] =
 	U_BOOT_VERSION" (" U_BOOT_DATE " - " U_BOOT_TIME ")"CONFIG_IDENT_STRING;
+#else
+const char version_string[] =
+	UBT_VERSION_ID" (" U_BOOT_DATE " - " U_BOOT_TIME ")"CONFIG_IDENT_STRING;
+#endif
 
 #ifdef CONFIG_DRIVER_RTL8019
 extern void rtl8019_get_enetaddr (uchar * addr);
