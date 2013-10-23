@@ -163,6 +163,20 @@ static void vaux3_on(void)
     printf(" done.\n");
 }
 #else
+
+int boot_device_nand(void)
+{
+    u32* addr = (u32 *)(0x4020eff0);
+    int i;
+
+    for(i = 0; i < 4; i++, addr++) {
+		if(*addr != 0xafafafaf)
+				return 1;
+    }
+
+    return 0;
+}
+
 extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 static void vaux3_on(void)
 {
@@ -186,10 +200,12 @@ static void vaux3_on(void)
     if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
               val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
     {
-          printf("No VAUX3 active. Switch ON and reset.\n");
-          do_reset(NULL, 0, 0, NULL);
-
-          printf("Reset error???\n");
+	if(boot_device_nand()) {
+	  	printf("No VAUX3 active. Switch ON and reset.\n");
+          	do_reset(NULL, 0, 0, NULL);
+          	printf("Reset error???\n");
+	} else
+		printf("Active VAUX3 found. Go ahead.\n");
     } else
           printf("Active VAUX3 found. Go ahead.\n");
 }
@@ -595,25 +611,44 @@ static void set_string_to_display(void)
                 {&y[0][0], 28, 27, 3}
     };
 
-    string_to_frame(100, 100, str, 8);
-    string_to_frame(90, 170, str + 8, 7);
+    string_to_frame(150, 100, str, 8);
+    string_to_frame(140, 170, str + 8, 7);
 
     symbol tt = {&dot[0][0], 14, 24, 1};
 
-    sym_to_frame(258, 170, &tt);     //32
-    sym_to_frame(272, 170, &tt);     //14
-    sym_to_frame(286, 170, &tt);     //14
+    sym_to_frame(313, 170, &tt);     //32
+    sym_to_frame(327, 170, &tt);     //14
+    sym_to_frame(341, 170, &tt);     //14
 }
 
-#define FRAME_ADDR		"0x8fc00000"
+#define BUFF_ADDR		"0x80000000"
 #define IMG1_ADDR		"0x3ec80000"
 #define IMG2_ADDR               "0x3ee00000"
 #define IMG3_ADDR               "0x3ef80000"
 #define IMG4_ADDR               "0x3f100000"
-#define SIZE_OF_IMG             "0x177000"
+#define IMG_SIZE		"0x177000"
+#define MAGIC_ADDR		"0x3ec60000"
+#define MAGIK_SIZE		"0x20000"
+
+char* img_magic = "0xaf7254db";
 
 static void set_picture_to_display(void)
 {
+    unsigned magic;
+    char* s[] = {"do_nand", "read", BUFF_ADDR, MAGIC_ADDR, MAGIK_SIZE};
+
+    do_nand(NULL, 0, 5, s);
+    magic = readl(simple_strtoul(BUFF_ADDR, NULL, 16));
+
+    if(magic == simple_strtoul(img_magic, NULL, 16)) {
+	s[2] = "0x8fc00000";
+	s[3] = IMG1_ADDR;
+	s[4] = IMG_SIZE;
+        /* load_pic_to_frame */
+        do_nand(NULL, 0, 5, s);
+    } else
+        set_string_to_display();
+
     udelay(5000);		// by 1000 it works but has low bright
 
     if(panel_init()) {
@@ -623,15 +658,6 @@ static void set_picture_to_display(void)
 
     puts("Panel Init   ... done.\n");
 
-    int img_exist = 1;
-    char* argstr[] = {"do_nand", "read", FRAME_ADDR, IMG1_ADDR, SIZE_OF_IMG};
-
-    if(img_exist) {
-	/* load_pic_to_frame */
-	do_nand(NULL, 0, 5, argstr);
-    } else
-	set_string_to_display();
-
     if(panel_update()) {
 	puts("DSS ERROR:  panel don't update!\n");
 	return;
@@ -639,10 +665,10 @@ static void set_picture_to_display(void)
 
     puts("Panel Update ... done.\n");
 
-    if(img_exist) {
-	/* load_pic_to_frame */
-	argstr[3] = IMG2_ADDR;
-	do_nand(NULL, 0, 5, argstr);
+    if(magic == simple_strtoul(img_magic, NULL, 16)) {
+	// load_pic_to_frame /
+	s[3] = IMG2_ADDR;
+	do_nand(NULL, 0, 5, s);
     }
 }
 
