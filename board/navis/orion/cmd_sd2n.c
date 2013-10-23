@@ -31,13 +31,13 @@ static struct nand_part_map {
 int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
     int     force_flag = 0;
-    char *  bin_names[] = {"o_MLO", "o_u-boot.bin", "o_uImage", "o_rootfs",
+    char *  bin_names[] = {"o_MLO", "o_u-boot.bin", "o_uImage", "o_rootfs", "magic",
     			   "img1.raw", "img2.raw", "img3.raw", "img4.raw"};
     int     what_id;
     char *  fname_ptr;
     long    addr,count,filesize,wrsize; 
     size_t  length;
-    static int repeat = 4;
+    static int repeat = 5;
 
     block_dev_desc_t *dev_desc=NULL;
     nand_info_t *nand;
@@ -173,8 +173,8 @@ int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
      * We keep NAND related info in one place that way rather than
      * doing by hand, which is error prone.
      */
-	if(repeat == 7) {
-		repeat = 4;
+	if(repeat == 8) {
+		repeat = 5;
 		
 		extern char* img_magic;
 		char* s[] = {"do_mem_mw", "0x80000000", img_magic, "", ""};
