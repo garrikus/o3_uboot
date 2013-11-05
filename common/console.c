@@ -29,6 +29,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define CONFIG_SILENT_CONSOLE		/* for disable output to console (also need env 'silent') */
+
 #ifdef CONFIG_AMIGAONEG3SE
 int console_changed = 0;
 #endif

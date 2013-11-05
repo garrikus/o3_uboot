@@ -84,7 +84,7 @@ int board_init(void)
 }
 
 
-static void vaux4_on()
+static void vaux4_on(void)
 {
     unsigned char byte;
 
