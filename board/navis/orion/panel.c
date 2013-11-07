@@ -1,22 +1,19 @@
 #include "timers.h"
 #include "display.h"
 
-#define START_VMEM_ADDR         0x8fc00000
 #define VC0			0
 #define SLEEP_OUT		0x11
 #define DISPLAY_ON		0x29
 
+DECLARE_GLOBAL_DATA_PTR;
+
 void frame_reset(void)
 {
-    u32 *addr           = (u32 *)(START_VMEM_ADDR);
+    u32 *addr           = (u32 *)(gd->fb_base);
     u32 *end_frame_addr = addr + 480 * 800;
 
-    while(addr < end_frame_addr) {
-      /*  *((ulong*)addr) = (ulong)0; */
-        *((ulong*)addr) ^= *((ulong*)addr);
-      /*  addr += sizeof(ulong);*/
-      addr++;
-    }
+    while(addr < end_frame_addr)
+		memset(addr++, 0, sizeof(addr));
 }
 
 void panel_backlight(int state)
@@ -429,7 +426,7 @@ struct orion_graphics get_graphics_device(int device)
 	g.dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE,
 	g.dsi   = (struct dsi_engine_registers*)DSI_PROTOCOL_ENGINE_BASE;
 	g.gfx_format          = RGB24;
-	g.plane_addr          = START_VMEM_ADDR;
+	g.plane_addr          = gd->fb_base;
 	g.row_inc             = 1;
 	g.pix_inc             = 1;
 	g.gfx_position.x      = 0;

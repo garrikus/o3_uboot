@@ -304,6 +304,8 @@ void start_armboot (void)
 	display_flash_config (flash_init ());
 #endif /* CONFIG_SYS_NO_FLASH */
 
+	gd->fb_base = 0x8fc00000;
+
 #ifdef CONFIG_VFD
 #	ifndef PAGE_SIZE
 #	  define PAGE_SIZE 4096

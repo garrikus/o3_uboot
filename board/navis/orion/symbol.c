@@ -1,15 +1,10 @@
 #include "font.h"
 #include <asm/io.h>
-//#include <asm/arch-omap3/sys_proto.h>
-
 
 static void draw_string(int x, int line, unsigned char* points, int len)
 {
-    int offset,
-        y,
-        dot,
-        i, j;
-    unsigned int addr, color;
+    int      offset, y, dot, i, j;
+    unsigned addr, color;
 
     for(j = 0; j < len; j++) {
         for(i = 7; i >= 0; i--) {

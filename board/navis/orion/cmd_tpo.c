@@ -379,29 +379,79 @@ usage:
 }
 
 U_BOOT_CMD(
-	img,	4,		1,	do_img,
-	"an operation with Image",
-	"magic check - reads from NAND image magic number and checks him\n"
-	"img magic write [magicnumber] - writes image magic number to NAND\n"
-	"img show <img number/address> - reads image from NAND and output to LCD\n"
+        img,    4,              1,      do_img,
+        "an operation with Image",
+        "magic check - reads from NAND image magic number and checks him\n"
+        "img magic write [magicnumber] - writes image magic number to NAND\n"
+        "img show <img number/address> - reads image from NAND and output to LCD\n"
+        "\t\tnumber = 1, 2, 3 or 4; address must be prefixed with '0x'\n"
 );
 
-
-int do_display_update(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_panel(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
-    if(panel_update()) {
-            puts("DSS ERROR:  panel don't update!\n");
-	    return 1;
-    }
+    if(argc < 2)
+                goto usage;
 
-    puts("Panel Update ... done.\n");
-			    
+    if(strncmp(argv[1], "init", 4) == 0) {
+                                        if(panel_init()) {
+                                                puts("DSS ERROR:  panel don't init!\n");
+                                                return 1;
+                                        } else
+                                                puts("Panel Init ... done.\n");
+    } else if(strncmp(argv[1], "update", 6) == 0) {
+                                        if(panel_update()) {
+                                                puts("DSS ERROR:  panel don't update!\n");
+                                                return 1;
+                                        } else
+                                                puts("Panel Update ... done.\n");
+    } else if(strncmp(argv[1], "on", 2) == 0)
+                                        panel_backlight(1);
+    else if(strncmp(argv[1], "off", 3) == 0)
+                                        panel_backlight(0);
+    else
+                                    goto usage;
+          
     return 0;
+
+usage:
+        cmd_usage(cmdtp);
+        return 1;
 }
 
 U_BOOT_CMD(
-        display_update,  1,              1,      do_display_update,
-        "update the display",
-        ""
+        panel,  2,              1,      do_panel,
+        "the panel control",
+        "init   - initialize Display SubSystem\n"
+        "panel update - output the image to screen from the framebuffer (0x8fc00000)\n"
+        "panel on     - on the backlight\n"
+        "panel off    - off the backlight\n"
 );
+
+/*
+int do_backlight(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+        if(argc < 2)
+                    goto usage;
+        
+        if(strncmp(argv[1], "on", 2) == 0)
+                                panel_backlight(1);
+        else if(strncmp(argv[1], "off", 3) == 0)
+                                panel_backlight(0);
+        else
+                                goto usage;
+
+        return 0;
+
+usage:
+        cmd_usage(cmdtp);
+        return 1;
+}
+
+U_BOOT_CMD(
+        backlight,  2,              1,      do_backlight,
+        "control the backlight of the display",
+        "on  - on the backlight\n"
+        "backlight off - off the backlight\n"
+);
+*/
 
