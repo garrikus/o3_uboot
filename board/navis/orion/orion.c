@@ -622,53 +622,64 @@ static void set_string_to_display(void)
 }
 
 #define BUFF_ADDR		"0x80000000"
-#define IMG1_ADDR		"0x3ec80000"
-#define IMG2_ADDR               "0x3ee00000"
-#define IMG3_ADDR               "0x3ef80000"
-#define IMG4_ADDR               "0x3f100000"
-#define IMG_SIZE		"0x177000"
-#define MAGIC_ADDR		"0x3ec60000"
-#define MAGIK_SIZE		"0x20000"
 
-char* img_magic = "0xaf7254db";
+unsigned get_addr(unsigned);
 
 static void set_picture_to_display(void)
 {
-    unsigned magic;
-    char* s[] = {"do_nand", "read", BUFF_ADDR, MAGIC_ADDR, MAGIK_SIZE};
+    DECLARE_GLOBAL_DATA_PTR;
+
+    char maddr[10], msize[10], *img_size = "0x00177000";
+
+    enum {
+           img1 = 4,
+           img2,
+           img3,
+           img4,
+           magic
+         } blocks;
+
+    sprintf(maddr, "%x", get_addr((unsigned int)magic));
+    sprintf(msize, "%x", (get_addr((unsigned int)img1) - get_addr((unsigned int)magic)));
+
+    unsigned magnum;
+    char* s[] = {"do_nand", "read", BUFF_ADDR, maddr, msize};
 
     do_nand(NULL, 0, 5, s);
-    magic = readl(simple_strtoul(BUFF_ADDR, NULL, 16));
+    magnum = readl(simple_strtoul(BUFF_ADDR, NULL, 16));
 
-    if(magic == simple_strtoul(img_magic, NULL, 16)) {
-	s[2] = "0x8fc00000";
-	s[3] = IMG1_ADDR;
-	s[4] = IMG_SIZE;
+    if(magnum == gd->mnumber) {
+        sprintf(maddr, "%x", (unsigned int)gd->fb_base);
+        sprintf(msize, "%x", get_addr((unsigned int)img1));
+        s[2] = maddr;
+        s[3] = msize;
+        s[4] = img_size;
         /* load_pic_to_frame */
         do_nand(NULL, 0, 5, s);
     } else
         set_string_to_display();
 
-    udelay(5000);		// by 1000 it works but has low bright
+    udelay(5000);               // by 1000 it works but has low bright
 
     if(panel_init()) {
-	puts("DSS ERROR:  panel don't init!\n");
-	return;
+        puts("DSS ERROR:  panel don't init!\n");
+        return;
     }
 
     puts("Panel Init   ... done.\n");
 
     if(panel_update()) {
-	puts("DSS ERROR:  panel don't update!\n");
-	return;
+        puts("DSS ERROR:  panel don't update!\n");
+        return;
     }
 
     puts("Panel Update ... done.\n");
 
-    if(magic == simple_strtoul(img_magic, NULL, 16)) {
-	// load_pic_to_frame /
-	s[3] = IMG2_ADDR;
-	do_nand(NULL, 0, 5, s);
+    if(magnum == gd->mnumber) {
+        /* load_pic_to_frame */
+        sprintf(msize, "%x", get_addr((unsigned int)img2));
+        s[3] = msize;
+        do_nand(NULL, 0, 5, s);
     }
 }
 

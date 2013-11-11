@@ -170,19 +170,28 @@ int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	if(repeat == 7) {
 		repeat = 4;
 		
-		extern char* img_magic;
-		char* s[] = {"do_mem_mw", "0x80000000", img_magic, "", ""};
+		DECLARE_GLOBAL_DATA_PTR;
+		char data[10], buff[10], addr[10];
+		unsigned size = 0x20000;
+		
+		sprintf(data, "0x%x", gd->mnumber);
+		sprintf(buff, "0x%x", (unsigned int)SRAM_ADDR4IMAGE);
+
+		char* s[] = {"do_mem_mw", buff, data, "", ""};
 
 		do_mem_mw(NULL, 0, 3, s);
 		s[0] = "do_nand";
 		s[1] = "erase";
-		s[2] = "0x3ec60000";
-		s[3] = "0x20000";
+		sprintf(addr, "0x%x", (nand_parts[4].offset - size));
+		s[2] = addr;		//"0x3ec60000";
+		sprintf(data, "0x%x", size);
+		s[3] = data;		//"0x20000";
 		do_nand(NULL, 0, 4, s);
 		s[1] = "write";
-		s[2] = "0x80000000";
-		s[3] = "0x3ec60000";
-		s[4] = "0x20000";
+		s[2] = buff;		//"0x80000000";
+		s[3] = addr;		//"0x3ec60000";
+		sprintf(data, "0x%x", size);
+		s[4] = data;            //"0x20000";
 		do_nand(NULL, 0, 5, s);
 	} else
 		if(strcmp (argv[1], "img") == 0) {
@@ -203,3 +212,13 @@ U_BOOT_CMD(
 	"    - copy <binary> = mlo|uboot|uImage|rootfs to a predefind NAND location\n"
 	"      doesn't touch NAND unless forced"
 );
+
+inline unsigned get_addr(unsigned bl)
+{   
+    if(bl >= 8)
+		return 0x3ec60000;
+			            
+    return nand_parts[bl].offset;
+}
+
+

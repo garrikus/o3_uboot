@@ -305,6 +305,7 @@ void start_armboot (void)
 #endif /* CONFIG_SYS_NO_FLASH */
 
 	gd->fb_base = 0x8fc00000;
+	gd->mnumber = 0xaf7254db;
 
 #ifdef CONFIG_VFD
 #	ifndef PAGE_SIZE

@@ -316,29 +316,45 @@ U_BOOT_CMD(
 	""
 );
 
-extern char* img_magic;
 int do_img(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
     if(argc < 2)
             goto usage;
 
+    DECLARE_GLOBAL_DATA_PTR;
+
     char* cmd = argv[1];
+    enum {
+		img1 = 4,
+		img2,
+		img3,
+		img4,
+		magic
+    };
 
     if(strncmp(cmd, "magic", 5) == 0) {
 	if(argc < 3)
 		goto usage;
 
+	char* buff_addr = "0x80000000";
+	char maddr[10], msize[10];
+	
+	sprintf(maddr, "%x", get_addr((unsigned int)magic));
+	sprintf(msize, "%x", (get_addr((unsigned int)img1) - get_addr((unsigned int)magic)));
+
 	if(strncmp(argv[2], "check", 5) == 0) {
 		unsigned bytes;
-		char* s[] = {"do_nand", "read", "0x80000000", "0x3ec60000", "0x20000"};
+		char* s[] = {"do_nand", "read", buff_addr, maddr, msize};
 
 		do_nand(NULL, 0, 5, s);
 		bytes = readl(simple_strtoul(s[2], NULL, 16));
 
-		printf("%s: 0x%x\n", bytes == simple_strtoul(img_magic, NULL, 16) ? \
+		printf("%s: 0x%x\n", bytes == gd->mnumber ? \
 		       "The magic is the same" : "The magic does not match", bytes);
 	} else if(strncmp(argv[2], "write", 5) == 0) {
-		char* s[] = {"do_mem_mw", "0x80000000", img_magic, "", ""}; //char* img_magic = 0xaf7254db
+		char tmpdata[10];
+		sprintf(tmpdata, "%x", gd->mnumber);
+		char* s[] = {"do_mem_mw", buff_addr, tmpdata, "", ""}; //char* img_magic = 0xaf7254db
 
 		if(argc > 3)
 			s[2] = argv[3];
@@ -346,30 +362,34 @@ int do_img(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		do_mem_mw(NULL, 0, 3, s);  
 		s[0] = "do_nand";
 		s[1] = "erase"; 
-		s[2] = "0x3ec60000";
-		s[3] = "0x20000";
+		s[2] = maddr;
+		s[3] = msize;
 		do_nand(NULL, 0, 4, s);
 		s[1] = "write"; 
-		s[2] = "0x80000000";
-		s[3] = "0x3ec60000";
-		s[4] = "0x20000";
+		s[2] = buff_addr;
+		s[3] = maddr;
+		s[4] = msize;
 		do_nand(NULL, 0, 5, s);
-	}
+	} else goto usage;
     } else if(strncmp(cmd, "show", 4) == 0) {
 		if(argc < 3)
 	                goto usage;
+		char framebuff[10], img_addr[10], *img_size = "0x180000";
+		sprintf(framebuff, "%x", gd->fb_base);
+		char* s[] = {"do_nand", "read", framebuff, "", img_size};
 
-		char* s[] = {"do_nand", "read", "0x8fc00000", "0x3ec80000", "0x180000"};
-
-		if(strncmp(argv[2], "2", 1) == 0) s[3] = "3ee00000";
-		else if(strncmp(argv[2], "3", 1) == 0) s[3] = "3ef80000";
-		else if(strncmp(argv[2], "4", 1) == 0) s[3] = "3f100000";
-		else if(strncmp(argv[2], "0x", 2) == 0) s[3] = argv[2];
+		if(strncmp(argv[2], "1", 1) == 0) sprintf(img_addr, "%x", get_addr((unsigned)img1));
+		else if(strncmp(argv[2], "2", 1) == 0) sprintf(img_addr, "%x", get_addr((unsigned)img2));
+		else if(strncmp(argv[2], "3", 1) == 0) sprintf(img_addr, "%x", get_addr((unsigned)img3));
+		else if(strncmp(argv[2], "4", 1) == 0) sprintf(img_addr, "%x", get_addr((unsigned)img4));
+//		else if(strncmp(argv[2], "0x", 2) == 0) memset(img_addr, argv[2], sizeof(img_addr));
 		else goto usage;
+
+		s[3] = img_addr;
 
 		do_nand(NULL, 0, 5, s);
 		panel_update();
-    }
+    } else goto usage;
 
     return 0;
 
