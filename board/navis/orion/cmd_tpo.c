@@ -48,8 +48,21 @@ U_BOOT_CMD(
 
 int do_mod_power(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
-    if(argc < 3)
+    if(argc < 2)
         goto usage;
+    else if(argc < 3) {
+        if(strncmp(argv[1], "off", 3) == 0) {
+                int i;
+                u8 value = 0x01;
+
+                puts("The shutting of ORION is down!\n");
+                i2c_set_bus_num(0);
+
+                for(i = 0; i < 3; i++)
+                        i2c_write(TWL4030_CHIP_PM_MASTER, TWL4030_PM_MASTER_P1_SW_EVENTS + i, 1, &value, 1);
+        } else
+                goto usage;
+    }
 
     if(i2c_get_bus_num()) i2c_set_bus_num(0);
 
@@ -147,6 +160,7 @@ U_BOOT_CMD(
         "power <module> down  - turn off the power supply of the module\n"
         "power <module> check - check the power supply of the module\n"
         "the list of modules: vaux1, vaux3, vaux4, mmc, vdac, vpll2.\n"
+        "power off            - this command is shutting the device down\n"
 );
 
 
@@ -424,13 +438,24 @@ int do_panel(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
                                                 return 1;
                                         } else
                                                 puts("Panel Update ... done.\n");
-    } else if(strncmp(argv[1], "on", 2) == 0)
+    } else if(strncmp(argv[1], "on", 2) == 0) {
                                         panel_backlight(1);
-    else if(strncmp(argv[1], "off", 3) == 0)
+                                        puts("the command the backlight ON was sent...\n");
+    } else if(strncmp(argv[1], "off", 3) == 0) {
                                         panel_backlight(0);
+                                        puts("the command the backlight OFF was sent...\n");
+    } else if(strncmp(argv[1], "uninit", 6) == 0)
+                                        panel_uninit();
     else
+//#if defined(ORION3_BOARD)
+    if(strncmp(argv[1], "reset", 5) == 0) {
+                                        extern void reset_for_dsi(void);
+                                        reset_for_dsi();
+                                        puts("the command the reset DSI was sent...\n");
+    } else
+//#endif
                                     goto usage;
-          
+
     return 0;
 
 usage:
@@ -445,6 +470,7 @@ U_BOOT_CMD(
         "panel update - output the image to screen from the framebuffer (0x8fc00000)\n"
         "panel on     - on the backlight\n"
         "panel off    - off the backlight\n"
+        "panel reset  - hard reset DSI\n"
 );
 
 /*

@@ -355,6 +355,27 @@ void dsi_initialize_irq(struct orion_display* d)
     writel(DSI_CIO_IRQ_ERROR_MASK, &d->dctrl.dsi->complexio_irqenable);
 }
 
+void dsi_disable_irq(void)
+{
+    struct dsi_engine_registers* dsi = (struct dsi_engine_registers*)DSI_PROTOCOL_ENGINE_BASE;
+    int i;
+
+    writel(0, &dsi->irqenable);                                  //disable all dsi interrupts
+
+    for(i = 0; i < 4; i++)
+                writel(0, &dsi->vc0_irqenable + 0x20 * i);       //disable all vc interrupts
+
+    writel(0, &dsi->complexio_irqenable);                        //disable all complexio interrupts
+    writel(readl(&dsi->irqstatus), &dsi->irqstatus);              //clear interrupt status
+
+    for(i = 0; i < 4; i++)
+                writel(readl(&dsi->vc0_irqstatus + 0x20 * i),
+                       &dsi->vc0_irqstatus + 0x20 * i);
+
+    writel(readl(&dsi->complexio_irqstatus),
+           &dsi->complexio_irqstatus);
+}
+
 int dsi_pll_init(struct orion_display* d)
 {
 //    struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
@@ -794,6 +815,11 @@ int init_dsi(struct orion_display* d)
     return 0;
 }
 
+/* here must be disabled all DSI interrupts  */
+void uninit_dsi(void)
+{
+    dsi_disable_irq();
+}
 
 void enable_vc_irq(const int channel, const u32 irqtype, int enable)
 {

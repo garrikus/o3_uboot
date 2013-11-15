@@ -28,9 +28,9 @@
 const omap3_sysinfo sysinfo = {
 	DDR_DISCRETE,
 #if defined(ORION3_BOARD)
-	"Orion-3 board",
+	"Orion board v2.1",
 #else
-	"Orion-2 board",
+	"Orion board v2.0",
 #endif
 #if defined(CONFIG_ENV_IS_IN_ONENAND)
 	"OneNAND",

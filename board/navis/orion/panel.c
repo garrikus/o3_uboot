@@ -109,6 +109,7 @@ int orion_display_enable(void)
 
     if(init_dsi(&display)) {
                 dsserr("DSI init failed!");
+                uninit_dsi();
 		goto error;
     }
 
@@ -119,10 +120,13 @@ error:
     return 1;
 }
 
-int panel_init(void)
-{
 // common setting //
     unsigned char SETEXTC[4]  = {0xB9, 0xFF, 0x83, 0x69};
+    unsigned char SETPOWER[]  = {0xb1, 0x85, 0x00, 0x25,
+                                 0x06, 0x00, 0x0f, 0x0f,
+                                 0x2a, 0x32, 0x3f, 0x3f,
+                                 0x01, 0x3a, 0x01, 0xe6,
+                                 0xe6, 0xe6, 0xe6, 0xe6};
     unsigned char SETMIPI[14] = {
                         0xBA, 0x00, 0xA0, 0xC6,
                         0x00, 0x0A, 0x00, 0x10,
@@ -142,11 +146,13 @@ int panel_init(void)
     };
 
     unsigned char SETTPSNR[11] = {
-            0xD8, 0x00, 0x12, 0x76,
-            0xA7, 0x09, 0x67, 0x50,
+            0xD8, 0x00, 0x12, 0x66,
+            0x66, 0x09, 0x67, 0x50,
             0x4E, 0x57, 0x75
     };
 
+int panel_init(void)
+{
     if(orion_display_enable()) {
 		dsserr("failed to enable display!");
 		return 1;
@@ -157,6 +163,8 @@ int panel_init(void)
 
     if(vc_dcs_write(VC0, SETEXTC, sizeof(SETEXTC)))
     						return 1;
+    if(vc_dcs_write(VC0, SETPOWER, sizeof(SETPOWER)))
+                                                return 1;
     if(vc_dcs_write(VC0, SETGIP, sizeof(SETGIP)))
     						return 1;
     if(vc_dcs_write(VC0, SETTPSNR, sizeof(SETTPSNR)))
@@ -196,7 +204,16 @@ int panel_init(void)
     return 0;
 }
 
+void panel_uninit(void)
+{
+//    extern void reset_for_dsi(void);
 
+    panel_backlight(OFF);
+    dss_clocks(ENABLE);
+    uninit_dsi();
+    dss_clocks(DISABLE);
+//    reset_for_dsi();
+}
 
 
 

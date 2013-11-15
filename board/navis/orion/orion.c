@@ -115,7 +115,7 @@ static void vaux4_on(void)
 #define GPIO_OE_bank6			0x49058034
 #define GPIO_DATAOUT_bank6		0x4905803C
 */
-static inline void reset_for_dsi(void)
+inline void reset_for_dsi(void)
 {
 /*
     r32setv(GPIO_OE_bank6,      gpio180_bit, 1, 0);		//GPIO6 GPIO_OE - to out
