@@ -20,7 +20,8 @@ static struct nand_part_map {
     {0x00000000, 0x00050000}, /* X-Loader MLO */
     {0x00080000, 0x001c0000}, /* U-boot       */
     {0x00280000, 0x00500000}, /* Linux kernel */
-    {0x00780000, 0x3e500000},//3f880000}  /* rootfs image */
+    {0x00780000, 0x3e4e0000}, /* rootfs image */
+    {0x3ec60000, 0x00020000}, /* imgs magic number */
     {0x3ec80000, 0x00180000}, /* img1 */
     {0x3ee00000, 0x00180000}, /* img2 */
     {0x3ef80000, 0x00180000}, /* img3 */
@@ -30,13 +31,13 @@ static struct nand_part_map {
 int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
     int     force_flag = 0;
-    char *  bin_names[] = {"o_MLO", "o_u-boot.bin", "o_uImage", "o_rootfs",
+    char *  bin_names[] = {"o_MLO", "o_u-boot.bin", "o_uImage", "o_rootfs", "magic",
     			   "img1.raw", "img2.raw", "img3.raw", "img4.raw"};
     int     what_id;
     char *  fname_ptr;
     long    addr,count,filesize,wrsize; 
     size_t  length;
-    static int repeat = 4;
+    static int repeat = 5;
 
     block_dev_desc_t *dev_desc=NULL;
     nand_info_t *nand;
@@ -167,8 +168,13 @@ int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	    return 1;
 	}
 
-	if(repeat == 7) {
-		repeat = 4;
+    /*
+     * FIXME: Probably the right way to do it is using nand_parts[].
+     * We keep NAND related info in one place that way rather than
+     * doing by hand, which is error prone.
+     */
+	if(repeat == 8) {
+		repeat = 5;
 		
 		DECLARE_GLOBAL_DATA_PTR;
 		char data[10], buff[10], addr[10];
