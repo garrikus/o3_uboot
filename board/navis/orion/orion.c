@@ -109,7 +109,6 @@ static void vaux4_on(void)
     printf(" done.\n");
 }
 
-#if defined(ORION3_BOARD)
 /*
 #define gpio180_bit			20
 #define GPIO_OE_bank6			0x49058034
@@ -146,70 +145,59 @@ inline void reset_for_dsi(void)
     udelay(130000);
 }
 
-static void vaux3_on(void)
-{
-    u8 byte;
-
-    printf("VAUX3 Init   ...");
-
-    byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
-    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
-            TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
-    byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
-    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
-            TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
-
-    reset_for_dsi();
-    printf(" done.\n");
-}
-#else
-
-int boot_device_nand(void)
-{
-    u32* addr = (u32 *)(0x4020eff0);
-    int i;
-
-    for(i = 0; i < 4; i++, addr++) {
-		if(*addr != 0xafafafaf)
-				return 1;
-    }
-
-    return 0;
-}
-
 extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 static void vaux3_on(void)
 {
+    if(getenv("board")) {
     /* Check if we have VAUX3 pwr running */
 
-    u8 byte, val1, val2;
+	u8 byte, val1, val2;
 
-    twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val1,
+	twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val1,
               TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
-    twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val2,
+	twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val2,
               TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
 
-    byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
-    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+	byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
+	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
               TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
 
-    byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
-    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+	byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
+	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
               TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
 
-    if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
-              val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
-    {
-	if(boot_device_nand()) {
-	  	printf("No VAUX3 active. Switch ON and reset.\n");
-          	do_reset(NULL, 0, 0, NULL);
-          	printf("Reset error???\n");
+	if(!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+              val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28)) {
+		u32* addr = (u32 *)(0x4020eff0);
+		int i;
+	
+		for(i = 0; i < 4; i++, addr++) {
+			if(*addr != 0xafafafaf) {
+				printf("No VAUX3 active. Switch ON and reset.\n");
+				do_reset(NULL, 0, 0, NULL);
+				printf("Reset error???\n");
+			}
+		}
+	
+		printf("Active VAUX3 found. Go ahead.\n");
 	} else
 		printf("Active VAUX3 found. Go ahead.\n");
-    } else
-          printf("Active VAUX3 found. Go ahead.\n");
+    } else {
+	u8 byte;
+
+	printf("VAUX3 Init   ...");
+
+	byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
+	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+		TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
+	byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
+	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+		TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+
+	reset_for_dsi();
+	printf(" done.\n");
+    }
 }
-#endif
 
 void frame_reset(void);
 void sym_to_frame(int, int, symbol*);
