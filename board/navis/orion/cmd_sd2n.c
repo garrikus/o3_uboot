@@ -188,7 +188,7 @@ int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		do_mem_mw(NULL, 0, 3, s);
 		s[0] = "do_nand";
 		s[1] = "erase";
-		sprintf(addr, "0x%x", (nand_parts[4].offset - size));
+		sprintf(addr, "0x%x", (nand_parts[4].offset));
 		s[2] = addr;		//"0x3ec60000";
 		sprintf(data, "0x%x", size);
 		s[3] = data;		//"0x20000";
@@ -221,7 +221,7 @@ U_BOOT_CMD(
 
 inline unsigned get_addr(unsigned bl)
 {   
-    if(bl >= 8)
+    if(bl > 8)
 		return 0x3ec60000;
 			            
     return nand_parts[bl].offset;

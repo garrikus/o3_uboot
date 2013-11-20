@@ -339,11 +339,11 @@ int do_img(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
     char* cmd = argv[1];
     enum {
-		img1 = 4,
+		magic = 4,
+		img1,
 		img2,
 		img3,
 		img4,
-		magic
     };
 
     if(strncmp(cmd, "magic", 5) == 0) {
@@ -446,14 +446,11 @@ int do_panel(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
                                         puts("the command the backlight OFF was sent...\n");
     } else if(strncmp(argv[1], "uninit", 6) == 0)
                                         panel_uninit();
-    else
-//#if defined(ORION3_BOARD)
-    if(strncmp(argv[1], "reset", 5) == 0) {
+    else if(strncmp(argv[1], "reset", 5) == 0) {
                                         extern void reset_for_dsi(void);
                                         reset_for_dsi();
                                         puts("the command the reset DSI was sent...\n");
     } else
-//#endif
                                     goto usage;
 
     return 0;

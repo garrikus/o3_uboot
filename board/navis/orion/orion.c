@@ -116,16 +116,21 @@ static void vaux4_on(void)
 */
 inline void reset_for_dsi(void)
 {
+    if(getenv("board")) {
+	do_reset(NULL, 0, 0, NULL);
+	printf("Reset error???\n");
+    } else {
+
 /*
     r32setv(GPIO_OE_bank6,      gpio180_bit, 1, 0);		//GPIO6 GPIO_OE - to out
     r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 0);		//OFF
     udelay(1000);
     r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 1);		//ON
 */
-    struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
+	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
 
-    /* Make GPIO 180 as output pin */
-    writel(readl(&gpio6_base->oe) & ~(GPIO20), &gpio6_base->oe);
+	/* Make GPIO 180 as output pin */
+	writel(readl(&gpio6_base->oe) & ~(GPIO20), &gpio6_base->oe);
 
     /*
      *  Now send a pulse on the GPIO pin
@@ -137,12 +142,13 @@ inline void reset_for_dsi(void)
      *  We give a bit more.
      */
 
-    writel(GPIO20, &gpio6_base->setdataout);
-    udelay(20);
-    writel(GPIO20, &gpio6_base->cleardataout);
-    udelay(20);
-    writel(GPIO20, &gpio6_base->setdataout);
-    udelay(130000);
+	writel(GPIO20, &gpio6_base->setdataout);
+	udelay(20);
+	writel(GPIO20, &gpio6_base->cleardataout);
+	udelay(20);
+	writel(GPIO20, &gpio6_base->setdataout);
+	udelay(130000);
+    }
 }
 
 extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
@@ -174,8 +180,7 @@ static void vaux3_on(void)
 		for(i = 0; i < 4; i++, addr++) {
 			if(*addr != 0xafafafaf) {
 				printf("No VAUX3 active. Switch ON and reset.\n");
-				do_reset(NULL, 0, 0, NULL);
-				printf("Reset error???\n");
+				reset_for_dsi();
 			}
 		}
 	
@@ -620,11 +625,11 @@ static void set_picture_to_display(void)
     char maddr[10], msize[10], *img_size = "0x00177000";
 
     enum {
-           img1 = 4,
+           magic = 4,
+	   img1,
            img2,
            img3,
-           img4,
-           magic
+           img4
          } blocks;
 
     sprintf(maddr, "%x", get_addr((unsigned int)magic));

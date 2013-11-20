@@ -65,7 +65,6 @@ void dss_clocks(bool enable)
 {
     struct dss_cm_registers* dcm_base  = (struct dss_cm_registers*)DSS_CM_BASE;
 
-//    if(enable) {
 ///set DSS1_ALWON_FCLK
         writel(0x9, &dcm_base->clksel);                 //DPLL4 M4 divide factor for DSS1_ALWON_FCLK is 7
         r32setv(&dcm_base->fclken, EN_DSS1, 1, (u32)enable);//0x1);    //Enable the DSS1_ALWON_FCLK
@@ -79,18 +78,14 @@ void dss_clocks(bool enable)
         r32setv(&dcm_base->sleepdep, EN_IVA2, 3, 0x6);            //Domain sleep is disabled
         r32setv(&dcm_base->clkstctrl, CLKTRCTRL_DSS, 2, 0x3);     //Enable automatic transition
         r32setv(&dcm_base->fclken, EN_TV, 1, (u32)enable);//0x1);
-//    } else {
-//        r32setv(&dcm_base->fclken, EN_DSS1, 1, 0x0);
-//        r32setv(&dcm_base->fclken, EN_DSS2, 1, 0x0);
-//        r32setv(&dcm_base->fclken, EN_TV, 1, 0x0);
-//        r32setv(&dcm_base->iclken, EN_DSS,  1, 0x0);
-//    }
 }
 
 int dss_reset(void)
 {
     struct display_subsystem_registers*  dss   = (struct display_subsystem_registers*)DISPLAY_SUBSYSTEM_BASE;
     struct display_controller_registers* dispc = (struct display_controller_registers*)DISPLAY_CONTROLLER_BASE;
+
+    dss_clocks(ENABLE);
 
     if(readl(&dispc->control) & 1) {
                 r32setv(&dispc->control, 0, 1, 0);
@@ -101,8 +96,6 @@ int dss_reset(void)
 //                else
 //			dssmsg("a frame is done... ok");
     }
-
-    dss_clocks(ENABLE);
 
     r32setv(&dss->sysconfig, SOFT_RESET, 1, 1);
 
