@@ -151,6 +151,32 @@ inline void reset_for_dsi(void)
     }
 }
 
+/*
+ *  Check if all 4 marker bytes that MLO left behind say "MMC".
+ *  Otherwise we follow NAND-scenario anyway.
+ */
+int is_boot_device_mmc(void)
+{
+    u32* addr = (ORN_BOOTDEV_PTR);
+    int i;
+
+    for(i = 0; i < 4; i++, addr++) {
+        switch(*addr) {
+        case ORN_BOOTDEV_MMC:
+            break;
+
+        case ORN_BOOTDEV_NAND:
+        case ORN_BOOTDEV_ERROR:
+        default:
+            /* Fall through any other marker. */
+            return 0;
+            break;
+        }
+    }
+
+    return 1;
+}
+
 extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 static void vaux3_on(void)
 {
@@ -172,21 +198,19 @@ static void vaux3_on(void)
 	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
               TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
 
-	if(!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
-              val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28)) {
-		u32* addr = (u32 *)(0x4020eff0);
-		int i;
-	
-		for(i = 0; i < 4; i++, addr++) {
-			if(*addr != 0xafafafaf) {
-				printf("No VAUX3 active. Switch ON and reset.\n");
-				reset_for_dsi();
-			}
-		}
-	
-		printf("Active VAUX3 found. Go ahead.\n");
-	} else
-		printf("Active VAUX3 found. Go ahead.\n");
+    if(!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+              val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
+    {
+        if(!is_boot_device_mmc()) {
+            printf("No VAUX3 active. Switch ON and reset.\n");
+            reset_for_dsi();
+            printf("Reset error???\n");
+        } else {
+            printf("MMC boot. Postpone reset.\n");
+        }
+    }
+    else
+        printf("Active VAUX3 found. Go ahead.\n");
     } else {
 	u8 byte;
 
