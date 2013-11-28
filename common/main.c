@@ -45,7 +45,7 @@
 #endif
 
 #define CONFIG_MENUPROMPT		"$"
-#define CONFIG_MENUKEY			126
+#define CONFIG_MENUKEY			126	/* '~' character */
 
 #if defined(CONFIG_SILENT_CONSOLE) || defined(CONFIG_POST) || defined(CONFIG_CMDLINE_EDITING)
 DECLARE_GLOBAL_DATA_PTR;
