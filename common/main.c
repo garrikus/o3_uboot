@@ -235,6 +235,7 @@ static __inline__ int abortboot(int bootdelay)
 	 * Check if key already pressed
 	 * Don't check if bootdelay < 0
 	 */
+#ifndef CONFIG_MENUPROMPT
 	if (bootdelay >= 0) {
 		if (tstc()) {	/* we got a key press	*/
 			(void) getc();  /* consume input	*/
@@ -242,6 +243,7 @@ static __inline__ int abortboot(int bootdelay)
 			abort = 1;	/* don't auto boot	*/
 		}
 	}
+#endif
 #endif
 
 	while ((bootdelay > 0) && (!abort)) {
@@ -255,6 +257,9 @@ static __inline__ int abortboot(int bootdelay)
 				bootdelay = 0;	/* no more delay	*/
 # ifdef CONFIG_MENUKEY
 				menukey = getc();
+
+				if(menukey != CONFIG_MENUKEY)
+							abort = 0;
 # else
 				(void) getc();  /* consume input	*/
 # endif
