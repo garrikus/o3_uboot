@@ -44,6 +44,8 @@
 #define CONFIG_SILENT_CONSOLE
 #endif
 
+#define CONFIG_MENUPROMPT		"$"
+
 #if defined(CONFIG_SILENT_CONSOLE) || defined(CONFIG_POST) || defined(CONFIG_CMDLINE_EDITING)
 DECLARE_GLOBAL_DATA_PTR;
 #endif
@@ -259,8 +261,9 @@ static __inline__ int abortboot(int bootdelay)
 			}
 			udelay(10000);
 		}
-
+#ifndef CONFIG_MENUPROMPT
 		printf("\b\b\b%2d ", bootdelay);
+#endif
 	}
 
 	putc('\n');
