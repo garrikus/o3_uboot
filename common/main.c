@@ -40,6 +40,10 @@
 
 #include <post.h>
 
+#ifndef CONFIG_SILENT_CONSOLE
+#define CONFIG_SILENT_CONSOLE
+#endif
+
 #if defined(CONFIG_SILENT_CONSOLE) || defined(CONFIG_POST) || defined(CONFIG_CMDLINE_EDITING)
 DECLARE_GLOBAL_DATA_PTR;
 #endif
@@ -215,6 +219,8 @@ static __inline__ int abortboot(int bootdelay)
 {
 	int abort = 0;
 
+	if(gd->flags & GD_FLG_SILENT)
+			gd->flags &= ~GD_FLG_SILENT;
 #ifdef CONFIG_MENUPROMPT
 	printf(CONFIG_MENUPROMPT);
 #else
