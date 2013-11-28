@@ -221,9 +221,10 @@ static int menukey = 0;
 static __inline__ int abortboot(int bootdelay)
 {
 	int abort = 0;
-
+#if defined (CONFIG_SILENT_CONSOLE) && defined(CONFIG_MENUPROMPT)
 	if(gd->flags & GD_FLG_SILENT)
 			gd->flags &= ~GD_FLG_SILENT;
+#endif
 #ifdef CONFIG_MENUPROMPT
 	printf(CONFIG_MENUPROMPT);
 #else
