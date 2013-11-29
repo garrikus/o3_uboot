@@ -1711,7 +1711,10 @@ static int run_pipe_real(struct pipe *pi)
 					extern int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 					extern int do_setenv(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 					extern int do_echo(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+					extern int do_mmc(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 					
+					if(cmdtp->cmd == do_mmc && gd->flags & GD_FLG_TEST_MODE)
+				                                                                return -1;
 					if(!(cmdtp->cmd == do_test_ram    ||
 					     cmdtp->cmd == do_mod_power   ||
 					     cmdtp->cmd == do_test_pwr    ||
@@ -1727,7 +1730,7 @@ static int run_pipe_real(struct pipe *pi)
 					     cmdtp->cmd == do_echo        ||
 					     cmdtp->cmd == do_setmode)    &&
 					     gd->flags & GD_FLG_TEST_MODE) {
-					     			printf("This command is not available!\n");
+					     			printf("Command '%s' is not available!\n", cmdtp->name);
 								return -1;
 					}
 				}
