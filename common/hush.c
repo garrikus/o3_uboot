@@ -1707,6 +1707,8 @@ static int run_pipe_real(struct pipe *pi)
 					extern int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 					extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 					extern int do_setmode(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+					extern int do_run(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+					extern int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 					
 					if(!(cmdtp->cmd == do_test_ram    ||
 					     cmdtp->cmd == do_mod_power   ||
@@ -1717,6 +1719,8 @@ static int run_pipe_real(struct pipe *pi)
 					     cmdtp->cmd == do_img         ||
 					     cmdtp->cmd == do_bootm       ||
 					     cmdtp->cmd == do_reset       ||
+					     cmdtp->cmd == do_run         ||
+					     cmdtp->cmd == do_nand        ||
 					     cmdtp->cmd == do_setmode)    &&
 					     gd->flags & GD_FLG_TEST_MODE) {
 					     			printf("This command is not available!\n");
