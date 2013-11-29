@@ -991,6 +991,8 @@ static inline void setup_prompt_string(int promptmode, char **prompt_str)
 	*prompt_str = (promptmode==1)? PS1 : PS2;
 #endif
 	debug_printf("result %s\n",*prompt_str);
+	printf("result %s\n",*prompt_str);
+	printf("PS1 %s\nPS2 %s\n",PS1, PS2);
 }
 #endif
 
@@ -1691,6 +1693,32 @@ static int run_pipe_real(struct pipe *pi)
 					}
 				else
 					flag |= CMD_FLAG_BOOTD;
+				} else {
+					extern int do_test_ram(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+					extern int do_mod_power(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+					extern int do_test_pwr(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+					extern int do_test_freq(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+					extern int do_test_nand(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+					extern int do_test_runlin(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+					extern int do_img(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+					extern int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+					extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+					extern int do_setmode(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+					
+					if(!(cmdtp->cmd == do_test_ram    ||
+					     cmdtp->cmd == do_mod_power   ||
+					     cmdtp->cmd == do_test_pwr    ||
+					     cmdtp->cmd == do_test_freq   ||
+					     cmdtp->cmd == do_test_nand   ||
+					     cmdtp->cmd == do_test_runlin ||
+					     cmdtp->cmd == do_img         ||
+					     cmdtp->cmd == do_bootm       ||
+					     cmdtp->cmd == do_reset       ||
+					     cmdtp->cmd == do_setmode)    &&
+					     gd->flags & GD_FLG_TEST_MODE) {
+					     			printf("This command is not available!\n");
+								return -1;
+					}
 				}
 #endif
 				/* found - check max args */

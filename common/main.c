@@ -440,6 +440,8 @@ void main_loop (void)
 		parse_string_outer(s, FLAG_PARSE_SEMICOLON |
 				    FLAG_EXIT_FROM_LOOP);
 # endif
+	    } else {
+		gd->flags |= GD_FLG_TEST_MODE;
 	    }
 	}
 #endif /* CONFIG_MENUKEY */
