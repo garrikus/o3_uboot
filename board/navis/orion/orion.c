@@ -676,6 +676,18 @@ static void set_picture_to_display(void)
     }
 }
 
+#define U_BOOT_VERSION_ADDR		0x4020f040
+
+inline void save_version(void)
+{
+    extern const char version_string[];
+    char* addr = (char*)(U_BOOT_VERSION_ADDR);
+    int i;
+
+    for(i = 0; i < strlen(version_string); i++)
+	                    addr[i] = version_string[i];
+}
+
 /*
  * Routine: misc_init_r
  * Description: Init ethernet (done here so udelay works)
@@ -693,6 +705,7 @@ int misc_init_r(void)
      */
     vaux4_on();
     i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+    save_version();
 #endif
 
 #if defined(CONFIG_CMD_NET)
