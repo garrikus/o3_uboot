@@ -682,10 +682,12 @@ inline void save_version(void)
 {
 	extern const char version_string[];
 	char *addr = (char *)(U_BOOT_VERSION_ADDR);
-	int i;
+	int i, len = strlen(version_string) > 60 ? 60 : strlen(version_string);
 
-	for (i = 0; i < strlen(version_string); i++)
+	for (i = 0; i < len; i++)
 		addr[i] = version_string[i];
+
+	addr[i] = '\0';
 }
 
 /*
