@@ -63,7 +63,7 @@ static void omap3_evm_get_revision(void)
 	case 0x92200000:
 	default:
 		omap3_evm_version = OMAP3EVM_BOARD_GEN_2;
-       }
+	}
 }
 
 /*
@@ -86,27 +86,27 @@ int board_init(void)
 
 static void vaux4_on(void)
 {
-    unsigned char byte;
+	unsigned char byte;
 
-    void * pcio1 = (void *)0x48002448;
+	void *pcio1 = (void *)0x48002448;
 
-    printf("VAUX4 Init   ...");
-    /* set VAUX4 to 2.5V */
-    byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
-    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
-            TWL4030_PM_RECEIVER_VAUX4_DEV_GRP);
+	printf("VAUX4 Init   ...");
+	/* set VAUX4 to 2.5V */
+	byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
+	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+	                     TWL4030_PM_RECEIVER_VAUX4_DEV_GRP);
 
-    byte = TWL4030_PM_RECEIVER_VAUX4_VSEL_25;
-    twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
-            TWL4030_PM_RECEIVER_VAUX4_DEDICATED);
+	byte = TWL4030_PM_RECEIVER_VAUX4_VSEL_25;
+	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+	                     TWL4030_PM_RECEIVER_VAUX4_DEDICATED);
 
-    sr32(pcio1, 27, 1, 0);
-    sr32(pcio1, 26, 1, 1);
-    sr32(pcio1, 25, 1, 1);
-    sr32(pcio1, 24, 1, 0);
+	sr32(pcio1, 27, 1, 0);
+	sr32(pcio1, 26, 1, 1);
+	sr32(pcio1, 25, 1, 1);
+	sr32(pcio1, 24, 1, 0);
 
 
-    printf(" done.\n");
+	printf(" done.\n");
 }
 
 /*
@@ -116,39 +116,39 @@ static void vaux4_on(void)
 */
 inline void reset_for_dsi(void)
 {
-    if(getenv("board")) {
-	do_reset(NULL, 0, 0, NULL);
-	printf("Reset error???\n");
-    } else {
+	if (getenv("board")) {
+		do_reset(NULL, 0, 0, NULL);
+		printf("Reset error???\n");
+	} else {
 
-/*
-    r32setv(GPIO_OE_bank6,      gpio180_bit, 1, 0);		//GPIO6 GPIO_OE - to out
-    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 0);		//OFF
-    udelay(1000);
-    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 1);		//ON
-*/
-	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
+		/*
+		    r32setv(GPIO_OE_bank6,      gpio180_bit, 1, 0);		//GPIO6 GPIO_OE - to out
+		    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 0);		//OFF
+		    udelay(1000);
+		    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 1);		//ON
+		*/
+		struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
 
-	/* Make GPIO 180 as output pin */
-	writel(readl(&gpio6_base->oe) & ~(GPIO20), &gpio6_base->oe);
+		/* Make GPIO 180 as output pin */
+		writel(readl(&gpio6_base->oe) & ~(GPIO20), &gpio6_base->oe);
 
-    /*
-     *  Now send a pulse on the GPIO pin
-     *
-     *  For hardware reset timings see
-     *  HX8369-A-DS datasheet. It suggests
-     *  t_resw = 10usec (min)
-     *  t_rest = 120msec (max)
-     *  We give a bit more.
-     */
+		/*
+		 *  Now send a pulse on the GPIO pin
+		 *
+		 *  For hardware reset timings see
+		 *  HX8369-A-DS datasheet. It suggests
+		 *  t_resw = 10usec (min)
+		 *  t_rest = 120msec (max)
+		 *  We give a bit more.
+		 */
 
-	writel(GPIO20, &gpio6_base->setdataout);
-	udelay(20);
-	writel(GPIO20, &gpio6_base->cleardataout);
-	udelay(20);
-	writel(GPIO20, &gpio6_base->setdataout);
-	udelay(130000);
-    }
+		writel(GPIO20, &gpio6_base->setdataout);
+		udelay(20);
+		writel(GPIO20, &gpio6_base->cleardataout);
+		udelay(20);
+		writel(GPIO20, &gpio6_base->setdataout);
+		udelay(130000);
+	}
 }
 
 /*
@@ -157,485 +157,483 @@ inline void reset_for_dsi(void)
  */
 int is_boot_device_mmc(void)
 {
-    u32* addr = (ORN_BOOTDEV_PTR);
-    int i;
+	u32 *addr = (ORN_BOOTDEV_PTR);
+	int i;
 
-    for(i = 0; i < 4; i++, addr++) {
-        switch(*addr) {
-        case ORN_BOOTDEV_MMC:
-            break;
+	for (i = 0; i < 4; i++, addr++) {
+		switch (*addr) {
+		case ORN_BOOTDEV_MMC:
+			break;
 
-        case ORN_BOOTDEV_NAND:
-        case ORN_BOOTDEV_ERROR:
-        default:
-            /* Fall through any other marker. */
-            return 0;
-            break;
-        }
-    }
+		case ORN_BOOTDEV_NAND:
+		case ORN_BOOTDEV_ERROR:
+		default:
+			/* Fall through any other marker. */
+			return 0;
+			break;
+		}
+	}
 
-    return 1;
+	return 1;
 }
 
 extern int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 static void vaux3_on(void)
 {
-    if(getenv("board")) {
-    /* Check if we have VAUX3 pwr running */
+	if (getenv("board")) {
+		/* Check if we have VAUX3 pwr running */
 
-	u8 byte, val1, val2;
+		u8 byte, val1, val2;
 
-	twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val1,
-              TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
-	twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val2,
-              TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+		twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val1,
+		                    TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
+		twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val2,
+		                    TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
 
-	byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
-	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
-              TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
+		byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
+		twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+		                     TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
 
-	byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
-	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
-              TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+		byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
+		twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+		                     TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
 
-    if(!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
-              val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28))
-    {
-        if(!is_boot_device_mmc()) {
-            printf("No VAUX3 active. Switch ON and reset.\n");
-            reset_for_dsi();
-            printf("Reset error???\n");
-        } else {
-            printf("MMC boot. Postpone reset.\n");
-        }
-    }
-    else
-        printf("Active VAUX3 found. Go ahead.\n");
-    } else {
-	u8 byte;
+		if (!((val1 & TWL4030_PM_RECEIVER_DEV_GRP_P1) &&
+		      val2 == TWL4030_PM_RECEIVER_VAUX3_VSEL_28)) {
+			if (!is_boot_device_mmc()) {
+				printf("No VAUX3 active. Switch ON and reset.\n");
+				reset_for_dsi();
+				printf("Reset error???\n");
+			} else {
+				printf("MMC boot. Postpone reset.\n");
+			}
+		} else
+			printf("Active VAUX3 found. Go ahead.\n");
+	} else {
+		u8 byte;
 
-	printf("VAUX3 Init   ...");
+		printf("VAUX3 Init   ...");
 
-	byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
-	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
-		TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
-	byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
-	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
-		TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
+		byte = TWL4030_PM_RECEIVER_DEV_GRP_P1;
+		twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+		                     TWL4030_PM_RECEIVER_VAUX3_DEV_GRP);
+		byte = TWL4030_PM_RECEIVER_VAUX3_VSEL_28;
+		twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
+		                     TWL4030_PM_RECEIVER_VAUX3_DEDICATED);
 
-	reset_for_dsi();
-	printf(" done.\n");
-    }
+		reset_for_dsi();
+		printf(" done.\n");
+	}
 }
 
 void frame_reset(void);
-void sym_to_frame(int, int, symbol*);
-void string_to_frame(int, int, symbol*, int);
+void sym_to_frame(int, int, symbol *);
+void string_to_frame(int, int, symbol *, int);
 int panel_init(void);
 int panel_update(void);
 
 static void set_string_to_display(void)
 {
-    frame_reset();
+	frame_reset();
 
-    unsigned char a[27][3] = {
-        {0},
-        {0},
-        {0},
-        {0},
-        {0},
-        {_______X,XXXXX___,________},
-        {_____XXX,XXXXXXX_,________},
-        {____XXX_,____XXXX,________},
-        {___XXX__,_____XXX,X_______},
-        {___XXX__,______XX,X_______},
-        {________,______XX,X_______},
-        {________,____XXXX,X_______},
-        {________,XXXXXXXX,X_______},
-        {______XX,XX____XX,X_______},
-        {___XXXX_,______XX,X_______},
-        {__XXX___,______XX,X_______},
-        {_XXX____,______XX,X_______},
-        {_XXX____,______XX,X_______},
-        {_XXX____,______XX,X_______},
-        {_XXX____,______XX,X_______},
-        {_XXX____,______XX,XX______},
-        {__XXXX__,____XXXX,XXX_____},
-        {____XXXX,XXXXXX__,_XXXXX__},
-        {______XX,XXXX____,___XXX__},
-        {0},
-        {0},
-        {0}
-    };
+	unsigned char a[27][3] = {
+		{0},
+		{0},
+		{0},
+		{0},
+		{0},
+		{_______X, XXXXX___, ________},
+		{_____XXX, XXXXXXX_, ________},
+		{____XXX_, ____XXXX, ________},
+		{___XXX__, _____XXX, X_______},
+		{___XXX__, ______XX, X_______},
+		{________, ______XX, X_______},
+		{________, ____XXXX, X_______},
+		{________, XXXXXXXX, X_______},
+		{______XX, XX____XX, X_______},
+		{___XXXX_, ______XX, X_______},
+		{__XXX___, ______XX, X_______},
+		{_XXX____, ______XX, X_______},
+		{_XXX____, ______XX, X_______},
+		{_XXX____, ______XX, X_______},
+		{_XXX____, ______XX, X_______},
+		{_XXX____, ______XX, XX______},
+		{__XXXX__, ____XXXX, XXX_____},
+		{____XXXX, XXXXXX__, _XXXXX__},
+		{______XX, XXXX____, ___XXX__},
+		{0},
+		{0},
+		{0}
+	};
 
-    unsigned char z[27][3] = {
-        {0},
-        {0},
-        {0},
-        {0},
-        {0},
-        {________,XXXXXX__,________},
-        {______XX,XXXXXXX_,________},
-        {_____XXX,_____XXX,________},
-        {____XXX_,______XX,X_______},
-        {____XXX_,______XX,X_______},
-        {________,______XX,X_______},
-        {________,____XXXX,________},
-        {_______X,XXXXXXX_,________},
-        {_______X,XXXXXX__,________},
-        {________,____XXXX,________},
-        {________,______XX,X_______},
-        {________,______XX,XX______},
-        {________,______XX,XX______},
-        {________,______XX,XX______},
-        {__XXX___,______XX,XX______},
-        {__XXX___,______XX,X_______},
-        {__XXX___,_____XXX,________},
-        {____XXX_,____XXX_,________},
-        {______XX,XXXXX___,________},
-        {0},
-        {0},
-        {0}
-    };
+	unsigned char z[27][3] = {
+		{0},
+		{0},
+		{0},
+		{0},
+		{0},
+		{________, XXXXXX__, ________},
+		{______XX, XXXXXXX_, ________},
+		{_____XXX, _____XXX, ________},
+		{____XXX_, ______XX, X_______},
+		{____XXX_, ______XX, X_______},
+		{________, ______XX, X_______},
+		{________, ____XXXX, ________},
+		{_______X, XXXXXXX_, ________},
+		{_______X, XXXXXX__, ________},
+		{________, ____XXXX, ________},
+		{________, ______XX, X_______},
+		{________, ______XX, XX______},
+		{________, ______XX, XX______},
+		{________, ______XX, XX______},
+		{__XXX___, ______XX, XX______},
+		{__XXX___, ______XX, X_______},
+		{__XXX___, _____XXX, ________},
+		{____XXX_, ____XXX_, ________},
+		{______XX, XXXXX___, ________},
+		{0},
+		{0},
+		{0}
+	};
 
-    unsigned char g[27][3] = {
-        {0},
-        {0},
-        {0},
-        {0},
-        {0},
-        {____XXXX,XXXXXXXX,XX______},
-        {____XXXX,XXXXXXXX,XX______},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {0},
-        {0},
-        {0}
-    };
+	unsigned char g[27][3] = {
+		{0},
+		{0},
+		{0},
+		{0},
+		{0},
+		{____XXXX, XXXXXXXX, XX______},
+		{____XXXX, XXXXXXXX, XX______},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{0},
+		{0},
+		{0}
+	};
 
-    unsigned char r[27][3] = {
-        {0},
-        {0},
-        {0},
-        {0},
-        {0},
-        {____XXX_,___XXX__,________},
-        {____XXX_,_XXXXXXX,________},
-        {____XXXX,XX____XX,X_______},
-        {____XXXX,_______X,XX______},
-        {____XXX_,________,XXX_____},
-        {____XXX_,________,XXX_____},
-        {____XXX_,________,XXX_____},
-        {____XXX_,________,XXX_____},
-        {____XXX_,________,XXX_____},
-        {____XXX_,________,XXX_____},
-        {____XXX_,________,XXX_____},
-        {____XXX_,________,XXX_____},
-        {____XXXX,_______X,XX______},
-        {____XXXX,X_____XX,X_______},
-        {____XXXX,XXXXXXX_,________},
-        {____XXX_,__XXX___,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-    };
+	unsigned char r[27][3] = {
+		{0},
+		{0},
+		{0},
+		{0},
+		{0},
+		{____XXX_, ___XXX__, ________},
+		{____XXX_, _XXXXXXX, ________},
+		{____XXXX, XX____XX, X_______},
+		{____XXXX, _______X, XX______},
+		{____XXX_, ________, XXX_____},
+		{____XXX_, ________, XXX_____},
+		{____XXX_, ________, XXX_____},
+		{____XXX_, ________, XXX_____},
+		{____XXX_, ________, XXX_____},
+		{____XXX_, ________, XXX_____},
+		{____XXX_, ________, XXX_____},
+		{____XXX_, ________, XXX_____},
+		{____XXXX, _______X, XX______},
+		{____XXXX, X_____XX, X_______},
+		{____XXXX, XXXXXXX_, ________},
+		{____XXX_, __XXX___, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+	};
 
-    unsigned char u[27][3] = {
-        {0},
-        {0},
-        {0},
-        {0},
-        {0},
-        {____XXX_,________,__XXX___},
-        {____XXX_,________,__XXX___},
-        {_____XXX,________,_XXX____},
-        {_____XXX,________,_XXX____},
-        {______XX,X_______,XXX_____},
-        {______XX,X_______,XXX_____},
-        {_______X,XX_____X,XX______},
-        {_______X,XX_____X,XX______},
-        {________,XXX___XX,X_______},
-        {________,XXX___XX,X_______},
-        {________,_XXX_XXX,________},
-        {________,__XXXXXX,________},
-        {________,___XXXX_,________},
-        {________,____XXX_,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,__XXX___,________},
-        {________,__XXX___,________},
-        {________,_XXX____,________},
-        {________,_XXX____,________},
-        {____XXX_,XXX_____,________},
-        {_____XXX,X_______,________}
-    };
+	unsigned char u[27][3] = {
+		{0},
+		{0},
+		{0},
+		{0},
+		{0},
+		{____XXX_, ________, __XXX___},
+		{____XXX_, ________, __XXX___},
+		{_____XXX, ________, _XXX____},
+		{_____XXX, ________, _XXX____},
+		{______XX, X_______, XXX_____},
+		{______XX, X_______, XXX_____},
+		{_______X, XX_____X, XX______},
+		{_______X, XX_____X, XX______},
+		{________, XXX___XX, X_______},
+		{________, XXX___XX, X_______},
+		{________, _XXX_XXX, ________},
+		{________, __XXXXXX, ________},
+		{________, ___XXXX_, ________},
+		{________, ____XXX_, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, __XXX___, ________},
+		{________, __XXX___, ________},
+		{________, _XXX____, ________},
+		{________, _XXX____, ________},
+		{____XXX_, XXX_____, ________},
+		{_____XXX, X_______, ________}
+	};
 
-    unsigned char k[27][3] = {
-        {0},
-        {0},
-        {0},
-        {0},
-        {0},
-        {____XXX_,________,XXX_____},
-        {____XXX_,_______X,XX______},
-        {____XXX_,______XX,X_______},
-        {____XXX_,_____XXX,________},
-        {____XXX_,____XXX_,________},
-        {____XXX_,___XXX__,________},
-        {____XXX_,__XXX___,________},
-        {____XXX_,_XXX____,________},
-        {____XXXX,XXX_____,________},
-        {____XXXX,XXXX____,________},
-        {____XXXX,X_XXX___,________},
-        {____XXXX,___XXX__,________},
-        {____XXX_,___XXX__,________},
-        {____XXX_,____XXX_,________},
-        {____XXX_,_____XXX,________},
-        {____XXX_,_____XXX,________},
-        {____XXX_,______XX,X_______},
-        {____XXX_,_______X,XX______},
-        {____XXX_,________,XXX_____},
-        {0},
-        {0},
-        {0}
-    };
+	unsigned char k[27][3] = {
+		{0},
+		{0},
+		{0},
+		{0},
+		{0},
+		{____XXX_, ________, XXX_____},
+		{____XXX_, _______X, XX______},
+		{____XXX_, ______XX, X_______},
+		{____XXX_, _____XXX, ________},
+		{____XXX_, ____XXX_, ________},
+		{____XXX_, ___XXX__, ________},
+		{____XXX_, __XXX___, ________},
+		{____XXX_, _XXX____, ________},
+		{____XXXX, XXX_____, ________},
+		{____XXXX, XXXX____, ________},
+		{____XXXX, X_XXX___, ________},
+		{____XXXX, ___XXX__, ________},
+		{____XXX_, ___XXX__, ________},
+		{____XXX_, ____XXX_, ________},
+		{____XXX_, _____XXX, ________},
+		{____XXX_, _____XXX, ________},
+		{____XXX_, ______XX, X_______},
+		{____XXX_, _______X, XX______},
+		{____XXX_, ________, XXX_____},
+		{0},
+		{0},
+		{0}
+	};
 
-    unsigned char s[27][3] = {
-        {0},
-        {0},
-        {0},
-        {0},
-        {0},
-        {________,_XXXXXXX,X_______},
-        {_______X,XXXXXXXX,XXX_____},
-        {______XX,X_______,_XXX____},
-        {_____XXX,________,__XXX___},
-        {____XXX_,________,__XXX___},
-        {____XXX_,________,__XXX___},
-        {____XXX_,________,__XXX___},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,__XXX___},
-        {_____XXX,________,__XXX___},
-        {______XX,X_______,_XXX____},
-        {_______X,XXXXXXXX,XXX_____},
-        {________,_XXXXXXX,X_______},
-        {0},
-        {0},
-        {0}
-    };
+	unsigned char s[27][3] = {
+		{0},
+		{0},
+		{0},
+		{0},
+		{0},
+		{________, _XXXXXXX, X_______},
+		{_______X, XXXXXXXX, XXX_____},
+		{______XX, X_______, _XXX____},
+		{_____XXX, ________, __XXX___},
+		{____XXX_, ________, __XXX___},
+		{____XXX_, ________, __XXX___},
+		{____XXX_, ________, __XXX___},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, __XXX___},
+		{_____XXX, ________, __XXX___},
+		{______XX, X_______, _XXX____},
+		{_______X, XXXXXXXX, XXX_____},
+		{________, _XXXXXXX, X_______},
+		{0},
+		{0},
+		{0}
+	};
 
-    unsigned char i[27][3] = {
-        {0},
-        {0},
-        {0},
-        {0},
-        {0},
-        {____XXX_,________,___XXX__},
-        {____XXX_,________,___XXX__},
-        {____XXX_,________,___XXX__},
-        {____XXX_,________,__XXXX__},
-        {____XXX_,________,_XXXXX__},
-        {____XXX_,________,XX_XXX__},
-        {____XXX_,_______X,X__XXX__},
-        {____XXX_,______XX,___XXX__},
-        {____XXX_,_____XX_,___XXX__},
-        {____XXX_,____XX__,___XXX__},
-        {____XXX_,___XX___,___XXX__},
-        {____XXX_,__XX____,___XXX__},
-        {____XXX_,_XX_____,___XXX__},
-        {____XXX_,XX______,___XXX__},
-        {____XXXX,X_______,___XXX__},
-        {____XXXX,________,___XXX__},
-        {____XXX_,________,___XXX__},
-        {____XXX_,________,___XXX__},
-        {____XXX_,________,___XXX__},
-        {0},
-        {0},
-        {0}
-    };
+	unsigned char i[27][3] = {
+		{0},
+		{0},
+		{0},
+		{0},
+		{0},
+		{____XXX_, ________, ___XXX__},
+		{____XXX_, ________, ___XXX__},
+		{____XXX_, ________, ___XXX__},
+		{____XXX_, ________, __XXXX__},
+		{____XXX_, ________, _XXXXX__},
+		{____XXX_, ________, XX_XXX__},
+		{____XXX_, _______X, X__XXX__},
+		{____XXX_, ______XX, ___XXX__},
+		{____XXX_, _____XX_, ___XXX__},
+		{____XXX_, ____XX__, ___XXX__},
+		{____XXX_, ___XX___, ___XXX__},
+		{____XXX_, __XX____, ___XXX__},
+		{____XXX_, _XX_____, ___XXX__},
+		{____XXX_, XX______, ___XXX__},
+		{____XXXX, X_______, ___XXX__},
+		{____XXXX, ________, ___XXX__},
+		{____XXX_, ________, ___XXX__},
+		{____XXX_, ________, ___XXX__},
+		{____XXX_, ________, ___XXX__},
+		{0},
+		{0},
+		{0}
+	};
 
-    unsigned char t[27][3] = {
-        {0},
-        {0},
-        {0},
-        {0},
-        {0},
-        {____XXXX,XXXXXXXX,XXXXX___},
-        {____XXXX,XXXXXXXX,XXXXX___},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {________,___XXX__,________},
-        {0},
-        {0},
-        {0}
-    };
+	unsigned char t[27][3] = {
+		{0},
+		{0},
+		{0},
+		{0},
+		{0},
+		{____XXXX, XXXXXXXX, XXXXX___},
+		{____XXXX, XXXXXXXX, XXXXX___},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{________, ___XXX__, ________},
+		{0},
+		{0},
+		{0}
+	};
 
-    unsigned char m[27][3] = {
-        {0},
-        {0},
-        {0},
-        {0},
-        {0},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXXX,________,___XXXX_},
-        {____XXXX,X_______,__XXXXX_},
-        {____XXX_,XX______,_XX_XXX_},
-        {____XXX_,_XX_____,XX__XXX_},
-        {____XXX_,__XX___X,X___XXX_},
-        {____XXX_,___XX_XX,____XXX_},
-        {____XXX_,____XXX_,____XXX_},
-        {____XXX_,_____X__,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {0},
-        {0},
-        {0}
-    };
+	unsigned char m[27][3] = {
+		{0},
+		{0},
+		{0},
+		{0},
+		{0},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXXX, ________, ___XXXX_},
+		{____XXXX, X_______, __XXXXX_},
+		{____XXX_, XX______, _XX_XXX_},
+		{____XXX_, _XX_____, XX__XXX_},
+		{____XXX_, __XX___X, X___XXX_},
+		{____XXX_, ___XX_XX, ____XXX_},
+		{____XXX_, ____XXX_, ____XXX_},
+		{____XXX_, _____X__, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{0},
+		{0},
+		{0}
+	};
 
-    unsigned char y[27][3] = {
-        {0},
-        {0},
-        {0},
-        {0},
-        {0},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXX_,________,____XXX_},
-        {____XXXX,XXXXX___,____XXX_},
-        {____XXXX,XXXXXXX_,____XXX_},
-        {____XXX_,_____XXX,____XXX_},
-        {____XXX_,_______X,X___XXX_},
-        {____XXX_,_______X,X___XXX_},
-        {____XXX_,_______X,X___XXX_},
-        {____XXX_,_______X,X___XXX_},
-        {____XXX_,_______X,X___XXX_},
-        {____XXX_,_____XXX,____XXX_},
-        {____XXXX,XXXXXXX_,____XXX_},
-        {____XXXX,XXXX____,____XXX_},
-        {0},
-        {0},
-        {0}
-    };
+	unsigned char y[27][3] = {
+		{0},
+		{0},
+		{0},
+		{0},
+		{0},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXX_, ________, ____XXX_},
+		{____XXXX, XXXXX___, ____XXX_},
+		{____XXXX, XXXXXXX_, ____XXX_},
+		{____XXX_, _____XXX, ____XXX_},
+		{____XXX_, _______X, X___XXX_},
+		{____XXX_, _______X, X___XXX_},
+		{____XXX_, _______X, X___XXX_},
+		{____XXX_, _______X, X___XXX_},
+		{____XXX_, _______X, X___XXX_},
+		{____XXX_, _____XXX, ____XXX_},
+		{____XXXX, XXXXXXX_, ____XXX_},
+		{____XXXX, XXXX____, ____XXX_},
+		{0},
+		{0},
+		{0}
+	};
 
-    unsigned char e[27][3] = {
-        {0},
-        {0},
-        {0},
-        {0},
-        {0},
-        {________,_XXXXXXX,X_______},
-        {_______X,XXXXXXXX,XXX_____},
-        {______XX,X_______,_XXX____},
-        {_____XXX,________,__XXX___},
-        {____XXX_,________,__XXX___},
-        {____XXX_,________,__XXX___},
-        {____XXX_,________,__XXX___},
-        {____XXXX,XXXXXXXX,XXXXX___},
-        {____XXXX,XXXXXXXX,XXXXX___},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,________},
-        {____XXX_,________,__XXX___},
-        {_____XXX,________,__XXX___},
-        {______XX,X_______,_XXX____},
-        {_______X,XXXXXXXX,XXX_____},
-        {________,_XXXXXXX,X_______},
-        {0},
-        {0},
-        {0}
-    };
+	unsigned char e[27][3] = {
+		{0},
+		{0},
+		{0},
+		{0},
+		{0},
+		{________, _XXXXXXX, X_______},
+		{_______X, XXXXXXXX, XXX_____},
+		{______XX, X_______, _XXX____},
+		{_____XXX, ________, __XXX___},
+		{____XXX_, ________, __XXX___},
+		{____XXX_, ________, __XXX___},
+		{____XXX_, ________, __XXX___},
+		{____XXXX, XXXXXXXX, XXXXX___},
+		{____XXXX, XXXXXXXX, XXXXX___},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, ________},
+		{____XXX_, ________, __XXX___},
+		{_____XXX, ________, __XXX___},
+		{______XX, X_______, _XXX____},
+		{_______X, XXXXXXXX, XXX_____},
+		{________, _XXXXXXX, X_______},
+		{0},
+		{0},
+		{0}
+	};
 
-    unsigned char dot[24][1] = {
-        {0}, {0}, {0}, {0}, {0},
-        {0}, {0}, {0}, {0}, {0},
-        {0}, {0}, {0}, {0}, {0},
-        {0}, {0}, {0}, {0}, {0},
-        {_XXXX___},
-        {XXXXXX__},
-        {XXXXXX__},
-        {_XXXX___},
-    };
+	unsigned char dot[24][1] = {
+		{0}, {0}, {0}, {0}, {0},
+		{0}, {0}, {0}, {0}, {0},
+		{0}, {0}, {0}, {0}, {0},
+		{0}, {0}, {0}, {0}, {0},
+		{_XXXX___},
+		{XXXXXX__},
+		{XXXXXX__},
+		{_XXXX___},
+	};
 
-    symbol str[15] = {
-                {&z[0][0], 24, 27, 3},
-                {&a[0][0], 24, 27, 3},
-                {&g[0][0], 24, 27, 3},
-                {&r[0][0], 20, 27, 3},
-                {&u[0][0], 20, 27, 3},
-                {&z[0][0], 22, 27, 3},
-                {&k[0][0], 20, 27, 3},
-                {&a[0][0], 22, 27, 3},
+	symbol str[15] = {
+		{&z[0][0], 24, 27, 3},
+		{&a[0][0], 24, 27, 3},
+		{&g[0][0], 24, 27, 3},
+		{&r[0][0], 20, 27, 3},
+		{&u[0][0], 20, 27, 3},
+		{&z[0][0], 22, 27, 3},
+		{&k[0][0], 20, 27, 3},
+		{&a[0][0], 22, 27, 3},
 
-                {&s[0][0], 20, 27, 3},
-                {&i[0][0], 24, 27, 3},
-                {&s[0][0], 24, 27, 3},
-                {&t[0][0], 20, 27, 3},
-                {&e[0][0], 20, 27, 3},
-                {&m[0][0], 24, 27, 3},
-                {&y[0][0], 28, 27, 3}
-    };
+		{&s[0][0], 20, 27, 3},
+		{&i[0][0], 24, 27, 3},
+		{&s[0][0], 24, 27, 3},
+		{&t[0][0], 20, 27, 3},
+		{&e[0][0], 20, 27, 3},
+		{&m[0][0], 24, 27, 3},
+		{&y[0][0], 28, 27, 3}
+	};
 
-    string_to_frame(150, 100, str, 8);
-    string_to_frame(140, 170, str + 8, 7);
+	string_to_frame(150, 100, str, 8);
+	string_to_frame(140, 170, str + 8, 7);
 
-    symbol tt = {&dot[0][0], 14, 24, 1};
+	symbol tt = {&dot[0][0], 14, 24, 1};
 
-    sym_to_frame(313, 170, &tt);     //32
-    sym_to_frame(327, 170, &tt);     //14
-    sym_to_frame(341, 170, &tt);     //14
+	sym_to_frame(313, 170, &tt);     //32
+	sym_to_frame(327, 170, &tt);     //14
+	sym_to_frame(341, 170, &tt);     //14
 }
 
 #define BUFF_ADDR		"0x80000000"
@@ -644,60 +642,74 @@ unsigned get_addr(unsigned);
 
 static void set_picture_to_display(void)
 {
-    DECLARE_GLOBAL_DATA_PTR;
+	DECLARE_GLOBAL_DATA_PTR;
 
-    char maddr[10], msize[10], *img_size = "0x00177000";
+	char maddr[10], msize[10], *img_size = "0x00177000";
 
-    enum {
-           magic = 4,
-	   img1,
-           img2,
-           img3,
-           img4
-         } blocks;
+	enum {
+		magic = 4,
+		img1,
+		img2,
+		img3,
+		img4
+	} blocks;
 
-    sprintf(maddr, "%x", get_addr((unsigned int)magic));
-    sprintf(msize, "%x", (get_addr((unsigned int)img1) - get_addr((unsigned int)magic)));
+	sprintf(maddr, "%x", get_addr((unsigned int)magic));
+	sprintf(msize, "%x", (get_addr((unsigned int)img1) - get_addr((unsigned int)magic)));
 
-    unsigned magnum;
-    char* s[] = {"do_nand", "read", BUFF_ADDR, maddr, msize};
+	unsigned magnum;
+	char *s[] = {"do_nand", "read", BUFF_ADDR, maddr, msize};
 
-    do_nand(NULL, 0, 5, s);
-    magnum = readl(simple_strtoul(BUFF_ADDR, NULL, 16));
+	do_nand(NULL, 0, 5, s);
+	magnum = readl(simple_strtoul(BUFF_ADDR, NULL, 16));
 
-    if(magnum == gd->mnumber) {
-        sprintf(maddr, "%x", (unsigned int)gd->fb_base);
-        sprintf(msize, "%x", get_addr((unsigned int)img1));
-        s[2] = maddr;
-        s[3] = msize;
-        s[4] = img_size;
-        /* load_pic_to_frame */
-        do_nand(NULL, 0, 5, s);
-    } else
-        set_string_to_display();
+	if (magnum == gd->mnumber) {
+		sprintf(maddr, "%x", (unsigned int)gd->fb_base);
+		sprintf(msize, "%x", get_addr((unsigned int)img1));
+		s[2] = maddr;
+		s[3] = msize;
+		s[4] = img_size;
+		/* load_pic_to_frame */
+		do_nand(NULL, 0, 5, s);
+	} else
+		set_string_to_display();
 
-    udelay(5000);               // by 1000 it works but has low bright
+	udelay(5000);               // by 1000 it works but has low bright
 
-    if(panel_init()) {
-        puts("DSS ERROR:  panel don't init!\n");
-        return;
-    }
+	if (panel_init()) {
+		puts("DSS ERROR:  panel don't init!\n");
+		return;
+	}
 
-    puts("Panel Init   ... done.\n");
+	puts("Panel Init   ... done.\n");
 
-    if(panel_update()) {
-        puts("DSS ERROR:  panel don't update!\n");
-        return;
-    }
+	if (panel_update()) {
+		puts("DSS ERROR:  panel don't update!\n");
+		return;
+	}
 
-    puts("Panel Update ... done.\n");
+	puts("Panel Update ... done.\n");
 
-    if(magnum == gd->mnumber) {
-        /* load_pic_to_frame */
-        sprintf(msize, "%x", get_addr((unsigned int)img2));
-        s[3] = msize;
-        do_nand(NULL, 0, 5, s);
-    }
+	if (magnum == gd->mnumber) {
+		/* load_pic_to_frame */
+		sprintf(msize, "%x", get_addr((unsigned int)img2));
+		s[3] = msize;
+		do_nand(NULL, 0, 5, s);
+	}
+}
+
+#define U_BOOT_VERSION_ADDR		0x4020f040
+
+inline void save_version(void)
+{
+	extern const char version_string[];
+	char *addr = (char *)(U_BOOT_VERSION_ADDR);
+	int i, len = strlen(version_string) > 60 ? 60 : strlen(version_string);
+
+	for (i = 0; i < len; i++)
+		addr[i] = version_string[i];
+
+	addr[i] = '\0';
 }
 
 /*
@@ -707,16 +719,17 @@ static void set_picture_to_display(void)
 int misc_init_r(void)
 {
 #ifdef CONFIG_DRIVER_OMAP34XX_I2C
-    vaux3_on();
-    set_picture_to_display();
-    /*
-     * We have to enable this VAUX4 LDO since there's a buggy chip
-     * in i2c-2 on this board that needs this power.
-     * Otherwise it occupies entire i2c-2 bus with some
-     * garbage. The culprit is TBFound.
-     */
-    vaux4_on();
-    i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+	vaux3_on();
+	set_picture_to_display();
+	/*
+	 * We have to enable this VAUX4 LDO since there's a buggy chip
+	 * in i2c-2 on this board that needs this power.
+	 * Otherwise it occupies entire i2c-2 bus with some
+	 * garbage. The culprit is TBFound.
+	 */
+	vaux4_on();
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+	save_version();
 #endif
 
 #if defined(CONFIG_CMD_NET)
@@ -764,12 +777,12 @@ static void setup_net_chip(void)
 	writew(readw(&ctrl_base->gpmc_noe) | 0x0E00, &ctrl_base->gpmc_noe);
 	/* Enable off mode for ALE in PADCONF_GPMC_NADV_ALE register */
 	writew(readw(&ctrl_base->gpmc_nadv_ale) | 0x0E00,
-		&ctrl_base->gpmc_nadv_ale);
+	       &ctrl_base->gpmc_nadv_ale);
 
 	/* determine omap3evm revision */
 	omap3_evm_get_revision();
 
-	if ( get_omap3_evm_rev() == OMAP3EVM_BOARD_GEN_1 ){
+	if ( get_omap3_evm_rev() == OMAP3EVM_BOARD_GEN_1 ) {
 		/* Make GPIO 64 as output pin */
 		writel(readl(&gpio3_base->oe) & ~(GPIO0), &gpio3_base->oe);
 
@@ -779,7 +792,7 @@ static void setup_net_chip(void)
 		writel(GPIO0, &gpio3_base->cleardataout);
 		udelay(1);
 		writel(GPIO0, &gpio3_base->setdataout);
-	}else{
+	} else {
 		/* Make GPIO 07 as output pin */
 		writel(readl(&gpio1_base->oe) & ~(GPIO7), &gpio1_base->oe);
 
