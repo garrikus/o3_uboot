@@ -40,10 +40,6 @@
 
 #include <post.h>
 
-#ifndef CONFIG_SILENT_CONSOLE
-#define CONFIG_SILENT_CONSOLE
-#endif
-
 #define CONFIG_MENUPROMPT		"$"
 #define CONFIG_MENUKEY			126	/* '~' character */
 

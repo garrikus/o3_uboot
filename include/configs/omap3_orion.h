@@ -266,6 +266,11 @@
 #define CONFIG_SYS_LOAD_ADDR		(OMAP34XX_SDRC_CS0) /* default load */
 								/* address */
 
+/* Silent mode for console */
+#ifndef CONFIG_SILENT_CONSOLE
+#define CONFIG_SILENT_CONSOLE
+#endif
+
 /*
  * OMAP3 has 12 GP timers, they can be driven by the system clock
  * (12/13/16.8/19.2/38.4MHz) or by 32KHz clock. We use 13MHz (V_SCLK).
