@@ -272,8 +272,8 @@ static __inline__ int abortboot(int bootdelay)
 	putc('\n');
 
 #ifdef CONFIG_SILENT_CONSOLE
-	if (abort)
-		gd->flags &= ~GD_FLG_SILENT;
+	if (!abort)
+		gd->flags |= GD_FLG_SILENT;
 #endif
 
 	return abort;
