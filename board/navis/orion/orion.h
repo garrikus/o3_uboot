@@ -33,6 +33,11 @@ const omap3_sysinfo sysinfo = {
 #endif
 };
 
+#define ORN_BOOTDEV_PTR ((unsigned int *)0x4020eff0)
+#define ORN_BOOTDEV_NAND   0x5f5f5f5f
+#define ORN_BOOTDEV_MMC    0xafafafaf
+#define ORN_BOOTDEV_ERROR  0xf0f0f0f0
+
 /*
  * OMAP35x EVM revision
  * Run time detection of EVM revision is done by reading Ethernet
