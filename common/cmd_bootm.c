@@ -424,6 +424,7 @@ static int bootm_load_os(image_info_t os, ulong *load_end, int boot_progress)
 		return BOOTM_ERR_UNIMPLEMENTED;
 	}
 	puts ("OK\n");
+	gd->flags &= ~GD_FLG_SILENT;
 	debug ("   kernel loaded at 0x%08lx, end = 0x%08lx\n", load, *load_end);
 	if (boot_progress)
 		show_boot_progress (7);
