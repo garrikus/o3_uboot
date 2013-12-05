@@ -470,6 +470,40 @@ U_BOOT_CMD(
         "panel reset  - hard reset DSI\n"
 );
 
+int do_setmode(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+        DECLARE_GLOBAL_DATA_PTR;
+
+        if(argc < 2) {
+                if(gd->flags & GD_FLG_TEST_MODE)
+                                        goto usage;
+                else {
+                        gd->flags |= GD_FLG_TEST_MODE;
+                        puts("test mode is set.\n");
+                        return 0;
+                }
+        }
+
+        if(!strncmp(argv[1], "dinamit", sizeof(argv[1]))) {
+                                        gd->flags &= ~GD_FLG_TEST_MODE;
+                                        puts("Welcome!!!\n");
+        } else
+                goto usage;
+
+        return 0;
+
+usage:
+        puts("command is incorrect!\n");
+        return 1;
+}
+
+U_BOOT_CMD(
+        setmode,  2,              1,      do_setmode,
+        "",
+        "\n"
+        "\n"
+);
+
 /*
 int do_backlight(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {

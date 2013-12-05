@@ -40,6 +40,9 @@
 
 #include <post.h>
 
+#define CONFIG_MENUPROMPT		"$"
+#define CONFIG_MENUKEY			126	/* '~' character */
+
 #if defined(CONFIG_SILENT_CONSOLE) || defined(CONFIG_POST) || defined(CONFIG_CMDLINE_EDITING)
 DECLARE_GLOBAL_DATA_PTR;
 #endif
@@ -214,7 +217,10 @@ static int menukey = 0;
 static __inline__ int abortboot(int bootdelay)
 {
 	int abort = 0;
-
+#if defined (CONFIG_SILENT_CONSOLE) && defined(CONFIG_MENUPROMPT)
+	if(gd->flags & GD_FLG_SILENT)
+			gd->flags &= ~GD_FLG_SILENT;
+#endif
 #ifdef CONFIG_MENUPROMPT
 	printf(CONFIG_MENUPROMPT);
 #else
@@ -226,6 +232,7 @@ static __inline__ int abortboot(int bootdelay)
 	 * Check if key already pressed
 	 * Don't check if bootdelay < 0
 	 */
+#ifndef CONFIG_MENUPROMPT
 	if (bootdelay >= 0) {
 		if (tstc()) {	/* we got a key press	*/
 			(void) getc();  /* consume input	*/
@@ -233,6 +240,7 @@ static __inline__ int abortboot(int bootdelay)
 			abort = 1;	/* don't auto boot	*/
 		}
 	}
+#endif
 #endif
 
 	while ((bootdelay > 0) && (!abort)) {
@@ -246,6 +254,9 @@ static __inline__ int abortboot(int bootdelay)
 				bootdelay = 0;	/* no more delay	*/
 # ifdef CONFIG_MENUKEY
 				menukey = getc();
+
+				if(menukey != CONFIG_MENUKEY)
+							abort = 0;
 # else
 				(void) getc();  /* consume input	*/
 # endif
@@ -253,15 +264,16 @@ static __inline__ int abortboot(int bootdelay)
 			}
 			udelay(10000);
 		}
-
+#ifndef CONFIG_MENUPROMPT
 		printf("\b\b\b%2d ", bootdelay);
+#endif
 	}
 
 	putc('\n');
 
 #ifdef CONFIG_SILENT_CONSOLE
-	if (abort)
-		gd->flags &= ~GD_FLG_SILENT;
+	if (!abort)
+		gd->flags |= GD_FLG_SILENT;
 #endif
 
 	return abort;
@@ -397,7 +409,9 @@ void main_loop (void)
 
 	debug ("### main_loop: bootcmd=\"%s\"\n", s ? s : "<UNDEFINED>");
 
-	if (bootdelay >= 0 && s && !abortboot (bootdelay)) {
+	if(is_boot_device_mmc())
+		gd->flags &= ~GD_FLG_SILENT;
+	else if (bootdelay >= 0 && s && !abortboot (bootdelay)) {
 # ifdef CONFIG_AUTOBOOT_KEYED
 		int prev = disable_ctrlc(1);	/* disable Control C checking */
 # endif
@@ -424,6 +438,8 @@ void main_loop (void)
 		parse_string_outer(s, FLAG_PARSE_SEMICOLON |
 				    FLAG_EXIT_FROM_LOOP);
 # endif
+	    } else {
+		gd->flags |= GD_FLG_TEST_MODE;
 	    }
 	}
 #endif /* CONFIG_MENUKEY */

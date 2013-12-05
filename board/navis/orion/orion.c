@@ -31,7 +31,6 @@
 #include <netdev.h>
 #include <asm/io.h>
 #include <asm/arch/mem.h>
-/*#include <asm/arch/mux.h>*/
 #include <asm/arch/sys_proto.h>
 #include <i2c.h>
 #include <asm/mach-types.h>
@@ -55,11 +54,11 @@ static void omap3_evm_get_revision(void)
 	printf("Read back SMSC id 0x%x\n", smsc_id);
 
 	switch (smsc_id) {
-	/* SMSC9115 chipset */
+		/* SMSC9115 chipset */
 	case 0x01150000:
 		omap3_evm_version = OMAP3EVM_BOARD_GEN_1;
 		break;
-	/* SMSC 9220 chipset */
+		/* SMSC 9220 chipset */
 	case 0x92200000:
 	default:
 		omap3_evm_version = OMAP3EVM_BOARD_GEN_2;
@@ -83,7 +82,6 @@ int board_init(void)
 	return 0;
 }
 
-
 static void vaux4_on(void)
 {
 	unsigned char byte;
@@ -104,16 +102,9 @@ static void vaux4_on(void)
 	sr32(pcio1, 26, 1, 1);
 	sr32(pcio1, 25, 1, 1);
 	sr32(pcio1, 24, 1, 0);
-
-
 	printf(" done.\n");
 }
 
-/*
-#define gpio180_bit			20
-#define GPIO_OE_bank6			0x49058034
-#define GPIO_DATAOUT_bank6		0x4905803C
-*/
 inline void reset_for_dsi(void)
 {
 	if (getenv("board")) {
@@ -121,12 +112,6 @@ inline void reset_for_dsi(void)
 		printf("Reset error???\n");
 	} else {
 
-		/*
-		    r32setv(GPIO_OE_bank6,      gpio180_bit, 1, 0);		//GPIO6 GPIO_OE - to out
-		    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 0);		//OFF
-		    udelay(1000);
-		    r32setv(GPIO_DATAOUT_bank6, gpio180_bit, 1, 1);		//ON
-		*/
 		struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
 
 		/* Make GPIO 180 as output pin */
@@ -647,11 +632,11 @@ static void set_picture_to_display(void)
 	char maddr[10], msize[10], *img_size = "0x00177000";
 
 	enum {
-		magic = 4,
-		img1,
-		img2,
-		img3,
-		img4
+	        magic = 4,
+	        img1,
+	        img2,
+	        img3,
+	        img4
 	} blocks;
 
 	sprintf(maddr, "%x", get_addr((unsigned int)magic));

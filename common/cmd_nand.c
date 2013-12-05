@@ -226,6 +226,12 @@ int do_nand(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		quiet = simple_strtoul(quiet_str, NULL, 0) != 0;
 
 	cmd = argv[1];
+	DECLARE_GLOBAL_DATA_PTR;
+
+	if(gd->flags & GD_FLG_TEST_MODE && strncmp(cmd, "read", 4)) {
+								puts("This command is not available!\n");
+								return 1;
+	}
 
 	if (strcmp(cmd, "info") == 0) {
 
