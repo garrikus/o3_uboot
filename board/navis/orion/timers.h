@@ -93,9 +93,9 @@ typedef enum {
 } tmr_divisor;
 
 typedef struct {
-	struct gptimer* tmr;
-	struct prcm*    prcm_base;
-	struct prm*     prm_base;
+	struct gptimer *tmr;
+	struct prcm    *prcm_base;
+	struct prm     *prm_base;
 	tmr_mode        mode;
 	tmr_reload      reload;
 	source_clk      source;
@@ -103,17 +103,17 @@ typedef struct {
 	tmr_num         num;
 } timer_t;
 
-void inline select_sys_clk(struct prm*, sys_clk);
-int config_timer(timer_t*,
-		 tmr_mode,
-		 tmr_reload,
-		 source_clk,
-		 tmr_divisor,
-		 u32,
-		 u32,
-		 u32);
-timer_t* init_timer(tmr_num);
-void inline start_timer(timer_t*);
-void inline stop_timer(timer_t*);
+void inline select_sys_clk(struct prm *, sys_clk);
+int config_timer(timer_t *,
+                 tmr_mode,
+                 tmr_reload,
+                 source_clk,
+                 tmr_divisor,
+                 u32,
+                 u32,
+                 u32);
+timer_t *init_timer(tmr_num);
+void inline start_timer(timer_t *);
+void inline stop_timer(timer_t *);
 
 #endif

@@ -360,8 +360,8 @@ static struct display_control {
 
 typedef enum {
 	DSS_SRC_DSI1_PLL_FCLK,
-        DSS_SRC_DSI2_PLL_FCLK,
-        DSS_SRC_DSS1_ALWON_FCLK,
+	DSS_SRC_DSI2_PLL_FCLK,
+	DSS_SRC_DSS1_ALWON_FCLK,
 } dss_clk_source;
 
 struct orion_display {
@@ -413,8 +413,8 @@ struct orion_display {
 
 	enum parallel_interface_mode {
 		PARALLELMODE_BYPASS,           /* MIPI DPI */
-	        PARALLELMODE_RFBI,             /* MIPI DBI */
-    		PARALLELMODE_DSI,
+		PARALLELMODE_RFBI,             /* MIPI DBI */
+		PARALLELMODE_DSI,
 	} interface_mode;
 
 	bool				     fifohandcheck;
@@ -513,7 +513,7 @@ struct orion_device {
 	struct dsi_engine_registers* dsi;
 	struct dsi_pll_registers*            pll;
 	struct display_subsystem_registers* dss;
-	
+
 };
 */
 

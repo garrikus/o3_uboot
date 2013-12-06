@@ -261,10 +261,10 @@
 
 
 typedef struct symbol_t {
-    unsigned char* sym;
-    int distance;
-    int row;
-    int column;
+	unsigned char *sym;
+	int distance;
+	int row;
+	int column;
 } symbol;
 
 
