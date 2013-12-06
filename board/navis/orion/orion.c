@@ -54,11 +54,11 @@ static void omap3_evm_get_revision(void)
 	printf("Read back SMSC id 0x%x\n", smsc_id);
 
 	switch (smsc_id) {
-		/* SMSC9115 chipset */
+	/* SMSC9115 chipset */
 	case 0x01150000:
 		omap3_evm_version = OMAP3EVM_BOARD_GEN_1;
 		break;
-		/* SMSC 9220 chipset */
+	/* SMSC 9220 chipset */
 	case 0x92200000:
 	default:
 		omap3_evm_version = OMAP3EVM_BOARD_GEN_2;
@@ -632,11 +632,11 @@ static void set_picture_to_display(void)
 	char maddr[10], msize[10], *img_size = "0x00177000";
 
 	enum {
-	        magic = 4,
-	        img1,
-	        img2,
-	        img3,
-	        img4
+		magic = 4,
+		img1,
+		img2,
+		img3,
+		img4
 	} blocks;
 
 	sprintf(maddr, "%x", get_addr((unsigned int)magic));
