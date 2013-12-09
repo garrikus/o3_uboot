@@ -17,7 +17,6 @@ typedef volatile unsigned char rbyte;
 
 int do_test_ram(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
-//	sdram_test();		//function in EVM3530_ITBOK/diagnostics/src/dg_ram.c - nothing to return
 	rbyte *base_addr = (rbyte *)START_ADDR_RAM;
 	rbyte *end_addr  = (rbyte *)END_ADDR_RAM;
 	u32 nBytes = ((u32)end_addr - (u32)base_addr);
@@ -26,7 +25,7 @@ int do_test_ram(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	printf("\nSDRAM Start address 0x%x, End address 0x%x\n\n",
 	       (unsigned int)base_addr, (unsigned int)end_addr);
 
-	if (test_sdram((rbyte *)base_addr, nBytes)) // == SUCCESS)
+	if (test_sdram((rbyte *)base_addr, nBytes))
 		printf(">TEST OK\r\n\n");
 	else
 		printf(">TEST ERROR\r\n\n");
@@ -67,7 +66,6 @@ int do_mod_power(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	if (i2c_get_bus_num()) i2c_set_bus_num(0);
 
 	char *module = argv[1];
-//	  cmd    = argv[2];
 	unsigned char vsel, dev_grp, dedicated, remap, grp_p = TWL4030_PM_RECEIVER_DEV_GRP_P1;
 
 	if (strncmp(module, "vaux1", 5) == 0) {
@@ -166,16 +164,6 @@ U_BOOT_CMD(
 
 int do_test_pwr(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
-	//	VMPU	1.2 V
-
-	//	VCORE	1.2 V
-	/*
-	    //	VIO	1.8 V
-		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VDAC_DEDICATED,	//	0X99
-					TWL4030_PM_RECEIVER_VIO_VSEL,		//	0XAF
-					TWL4030_PM_RECEIVER_VIO_DEV_GRP,	//	0XA6
-					TWL4030_PM_RECEIVER_DEV_GRP_P1);	//	0X20
-	*/
 	char *s[]      = {"do_mod_power", "vaux1", "up"};
 	char *module[] = {"vaux1", "vdac", "vpll2", "mmc", "vaux3", "vaux4"};
 	char *cmd[]    = {"up", "check", "down"};
@@ -231,27 +219,27 @@ static u32 test_clk()
 	val = readl(&prcm_base->fclken_per) | (1 << 5) | (1 << 4);	//FCLK GPtimer4 & GPtimer3 is enabled
 	writel(val, &prcm_base->fclken_per);
 
-	sr32(&prm_base->clksel, 1, 2, 0x3);		// sys clk = 26 MHz
+	sr32(&prm_base->clksel, 1, 2, 0x3);				// sys clk = 26 MHz
 
-	sr32(&prcm_base->clksel_per, 2, 1, 0x1);	// GPT4 = sys clk /
-	sr32(&prcm_base->clksel_per, 1, 1, 0x0);	// GPT3 = sys 32k /
+	sr32(&prcm_base->clksel_per, 2, 1, 0x1);			// GPT4 = sys clk /
+	sr32(&prcm_base->clksel_per, 1, 1, 0x0);			// GPT3 = sys 32k /
 
-	writel(0, &gpt4_base->tldr);			// start counting at 0
-	writel(0, &gpt4_base->tcrr);			// set GPT4 to 0
-	writel(0, &gpt3_base->tldr);			// start counting at 0
-	writel(0, &gpt3_base->tcrr);			// set GPT3 to 0
+	writel(0, &gpt4_base->tldr);					// start counting at 0
+	writel(0, &gpt4_base->tcrr);					// set GPT4 to 0
+	writel(0, &gpt3_base->tldr);					// start counting at 0
+	writel(0, &gpt3_base->tcrr);					// set GPT3 to 0
 
-	writel(0x3, &gpt3_base->tclr);			// enable clock - START GPT3
-	writel(0x3, &gpt4_base->tclr);			// enable clock - START GPT4
+	writel(0x3, &gpt3_base->tclr);					// enable clock - START GPT3
+	writel(0x3, &gpt4_base->tclr);					// enable clock - START GPT4
 
 	while (readl(&gpt3_base->tcrr) < 327680);
 
 	count = readl(&gpt4_base->tcrr);
 
-	writel(0, &gpt4_base->tclr);			// STOP GPT4
-	writel(0, &gpt3_base->tclr);			// STOP GPT3
-	writel(0, &gpt4_base->tcrr);			// set GPT4 to 0
-	writel(0, &gpt3_base->tcrr);			// set GPT3 to 0
+	writel(0, &gpt4_base->tclr);					// STOP GPT4
+	writel(0, &gpt3_base->tclr);					// STOP GPT3
+	writel(0, &gpt4_base->tcrr);					// set GPT4 to 0
+	writel(0, &gpt3_base->tcrr);					// set GPT3 to 0
 
 	return count;
 }
@@ -263,7 +251,7 @@ int do_test_freq(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	if (count > 259948000 && count < 260052000) 	printf("\n>TEST OK\r\n");
 	else						printf("\n>TEST ERROR\r\n");
-//printf("\n>count = %d\r\n", count);
+
 	return 0;
 }
 
@@ -368,7 +356,7 @@ int do_img(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		} else if (strncmp(argv[2], "write", 5) == 0) {
 			char tmpdata[10];
 			sprintf(tmpdata, "%x", gd->mnumber);
-			char *s[] = {"do_mem_mw", buff_addr, tmpdata, "", ""}; //char* img_magic = 0xaf7254db
+			char *s[] = {"do_mem_mw", buff_addr, tmpdata, "", ""}; 		//magic = 0xaf7254db
 
 			if (argc > 3)
 				s[2] = argv[3];
@@ -396,7 +384,6 @@ int do_img(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		else if (strncmp(argv[2], "2", 1) == 0) sprintf(img_addr, "%x", get_addr((unsigned)img2));
 		else if (strncmp(argv[2], "3", 1) == 0) sprintf(img_addr, "%x", get_addr((unsigned)img3));
 		else if (strncmp(argv[2], "4", 1) == 0) sprintf(img_addr, "%x", get_addr((unsigned)img4));
-//		else if(strncmp(argv[2], "0x", 2) == 0) memset(img_addr, argv[2], sizeof(img_addr));
 		else goto usage;
 
 		s[3] = img_addr;
@@ -503,32 +490,4 @@ U_BOOT_CMD(
         "\n"
         "\n"
 );
-
-/*
-int do_backlight(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
-{
-        if(argc < 2)
-                    goto usage;
-
-        if(strncmp(argv[1], "on", 2) == 0)
-                                panel_backlight(1);
-        else if(strncmp(argv[1], "off", 3) == 0)
-                                panel_backlight(0);
-        else
-                                goto usage;
-
-        return 0;
-
-usage:
-        cmd_usage(cmdtp);
-        return 1;
-}
-
-U_BOOT_CMD(
-        backlight,  2,              1,      do_backlight,
-        "control the backlight of the display",
-        "on  - on the backlight\n"
-        "backlight off - off the backlight\n"
-);
-*/
 
