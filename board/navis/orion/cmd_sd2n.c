@@ -182,15 +182,15 @@ int do_sd2n(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			s[0] = "do_nand";
 			s[1] = "erase";
 			sprintf(addr, "0x%x", (nand_parts[4].offset));
-			s[2] = addr;		//"0x3ec60000";
+			s[2] = addr;
 			sprintf(data, "0x%x", size);
-			s[3] = data;		//"0x20000";
+			s[3] = data;
 			do_nand(NULL, 0, 4, s);
 			s[1] = "write";
-			s[2] = buff;		//"0x80000000";
-			s[3] = addr;		//"0x3ec60000";
+			s[2] = buff;
+			s[3] = addr;
 			sprintf(data, "0x%x", size);
-			s[4] = data;            //"0x20000";
+			s[4] = data;
 			do_nand(NULL, 0, 5, s);
 		} else if (strcmp (argv[1], "img") == 0) {
 			char *s[] = {"do_sd2n", "img", "force"};
@@ -218,5 +218,4 @@ inline unsigned get_addr(unsigned bl)
 
 	return nand_parts[bl].offset;
 }
-
 

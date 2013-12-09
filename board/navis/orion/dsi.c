@@ -24,8 +24,7 @@ int vc_config_vp(const int channel)
 	if (wait_for_bit(vc_ctrl, 15, 1, 0, 100000)) {
 		dsserr("VC is BUZY!\n");
 		return 1;
-	} //else
-//	dssmsg("VC is not BUZY... ok");
+	}
 
 	r32setv(vc_ctrl, SOURCE, 1, 1);                                  // source is video port
 	vc_enable(channel, ENABLE);
@@ -42,8 +41,7 @@ int vc_config_l4(const int channel)
 	if (wait_for_bit(vc_ctrl, 15, 1, 0, 100000)) {
 		dsserr("VC is BUZY!");
 		return 1;
-	} //else
-//                dssmsg("VC is not BUZY... ok");
+	}
 
 	r32setv(vc_ctrl, SOURCE, 1, 0);                                  // source is l4
 	vc_enable(channel, ENABLE);
@@ -54,7 +52,7 @@ int vc_config_l4(const int channel)
 void vc_write_long_header(const int channel, const u8 data_type, u16 len, u8 ecc)
 {
 	u32 *vc_long_packet_header = (u32 *)(DSI_PROTOCOL_ENGINE_BASE + 0x108 + 0x20 * channel);
-	u8 data_id = data_type | (channel << 6);            //prepare packet
+	u8 data_id = data_type | (channel << 6);            		//prepare packet
 	u32 val = 0;
 
 	setv32(&val, 7, 8, data_id);
@@ -78,8 +76,7 @@ int is_packet_sent(const int channel)
 	if (wait_for_bit(vc_irqstatus, 2, 1, 1, 100000)) {
 		dsserr("a packet has not been sent!");
 		return 1;
-	} //else
-//	dssmsg("a packet has been sent... ok");
+	}
 
 	return 0;
 }
@@ -98,7 +95,6 @@ int vc_send_long(const int channel, const u8 data_type, u8 *data, u16 len, u8 ec
 
 	for (i = 0; i < len >> 2; i++) {
 #ifdef DSS_DEBUG_OUTPUT
-//        if(!i)
 		printf("\tsending full packet %d\n", i);
 #endif
 		b1 = *p++;
@@ -116,7 +112,6 @@ int vc_send_long(const int channel, const u8 data_type, u8 *data, u16 len, u8 ec
 		b2 = 0;
 		b3 = 0;
 #ifdef DSS_DEBUG_OUTPUT
-//        if(0 && dsi.debug_write)
 		printf("\tsending remainder bytes %d\n", i);
 #endif
 		switch (i) {
@@ -145,7 +140,7 @@ int vc_send_short(const int channel, u8 data_type, u16 data, u8 ecc)
 	dssmsg("<sending short>");
 
 	u32 *vc_ctrl                = (u32 *)(DSI_PROTOCOL_ENGINE_BASE + 0x100 + 0x20 * channel),
-	     *vc_short_packet_header = (u32 *)(DSI_PROTOCOL_ENGINE_BASE + 0x110 + 0x20 * channel);
+	    *vc_short_packet_header = (u32 *)(DSI_PROTOCOL_ENGINE_BASE + 0x110 + 0x20 * channel);
 
 	vc_config_l4(channel);
 
@@ -178,15 +173,13 @@ void vc_enable_bta_irq(const int channel, int enable)
 	}
 
 	u32 *vc_irqstatus = (u32 *)(DSI_PROTOCOL_ENGINE_BASE + 0x118 + 0x20 * channel),
-	     *vc_irqenable = (u32 *)(DSI_PROTOCOL_ENGINE_BASE + 0x11c + 0x20 * channel);
+	    *vc_irqenable = (u32 *)(DSI_PROTOCOL_ENGINE_BASE + 0x11c + 0x20 * channel);
 
 	enable = enable ? 1 : 0;
 
-//    r32setv(vc_ctrl, 0, 1, 0);                  //disable VC
 	vc_enable(channel, DISABLE);
 	r32setv(vc_irqstatus, 5, 1, 1);             //reset BTA IRQ
 	r32setv(vc_irqenable, 5, 1, enable);        //enable irq bta
-//    r32setv(vc_ctrl, 0, 1, 1);                  //enable VC
 	vc_enable(channel, ENABLE);
 }
 
@@ -209,7 +202,6 @@ int wait_for_completion_bta_timeout(const int channel)
 
 		if (irqstatus & 1)
 			if (vcstatus & (1 << 5)) {
-//                                dssmsg("BTA IRQ was received... ok");
 				writel(vcstatus, vc_irqstatus);
 				readl(vc_irqstatus);
 				return 0;
@@ -229,67 +221,33 @@ int vc_send_bta(const int channel)
 	}
 
 	u32 *vc_ctrl                = (u32 *)(DSI_PROTOCOL_ENGINE_BASE + 0x100 + 0x20 * channel),
-	     *vc_irqstatus           = (u32 *)(DSI_PROTOCOL_ENGINE_BASE + 0x118 + 0x20 * channel),
-	      *vc_short_packet_header = (u32 *)(DSI_PROTOCOL_ENGINE_BASE + 0x110 + 0x20 * channel);
+	    *vc_irqstatus           = (u32 *)(DSI_PROTOCOL_ENGINE_BASE + 0x118 + 0x20 * channel),
+	    *vc_short_packet_header = (u32 *)(DSI_PROTOCOL_ENGINE_BASE + 0x110 + 0x20 * channel);
 
-	if (readl(vc_ctrl) & (1 << 20)) {
+	if (readl(vc_ctrl) & (1 << 20))
 		puts("WARNING: The RX FIFO is not empty!\n");
-		/*
-		//////dsi_vc_flush_receive_data(channel)
-		        while(readl(vc_ctrl) & (1 << 20))
-		        {
-		            val = readl(vc_short_packet_header);
-		            a = (1 << 6);
-		            a--;
-		            a &= (u8)val;
-
-		            if(a == 0x2) puts("\tlook the 'dsi_show_rx_ack_with_err'!\n");  //dsi.c 1907
-		            else if(a == 0x21) printf("\tDCS short response, 1 byte: %#x\n", (u16)((val & 0xffff00) >> 8));
-		            else if(a == 0x22) printf("\tDCS short response, 2 byte: %#x\n", (u16)((val & 0xffff00) >> 8));
-		            else if(a == 0x1c) {
-		                        printf("\tDCS long response, len %d\n", (u16)((val & 0xffff00) >> 8));
-		////////dsi_vc_flush_long_data(channel)
-		                        while(readl(vc_ctrl) & (1 << 20))
-		                        {
-		                            val = readl(vc_short_packet_header);
-		                            printf("\t\tb1 %#02x b2 %#02x b3 %#02x b4 %#02x\n",
-		                                (val >> 0) & 0xff,
-		                                (val >> 8) & 0xff,
-		                                (val >> 16) & 0xff,
-		                                (val >> 24) & 0xff);
-		                        }
-		            } else printf("\tunknown datatype 0x%02x\n", a);
-		        }
-		//////-------------------------------------------------------------
-		    return 1;
-		*/
-	}
 
 	dssmsg("<send BTA signal>");
 
 	vc_enable_bta_irq(channel, ENABLE);
 
-	if (readl(vc_irqstatus) & (1 << 5)) {
+	if (readl(vc_irqstatus) & (1 << 5))
 		dsserr("BTA IRQ is set!");
-//                                      r32setv(&dsi->vc0_irqstatus, 5, 1, 1);
-	}// else puts(" BTA irq is not set\n");
 
-	if (readl(vc_ctrl) & (1 << 20)) dsserr("The RX FIFO is not empty!");
+	if (readl(vc_ctrl) & (1 << 20))
+		dsserr("The RX FIFO is not empty!");
 
 	r32setv(vc_ctrl, 6, 1, 1);           //send BTA
 
 	if (wait_for_bit(vc_ctrl, 6, 1, 0, 100000)) {
 		dsserr("BTA generation was not completed!");
 		return 1;
-	} //else
-//      dssmsg("BTA generation is completed... ok");
+	}
 
 	udelay(500);
 
-	if (wait_for_completion_bta_timeout(channel)) {
-//                             dsserr("BTA was not received!");
+	if (wait_for_completion_bta_timeout(channel))
 		return 1;
-	}
 
 	return 0;
 }
@@ -305,13 +263,7 @@ int vc_dcs_write(const int channel, u8 *data, u8 len)
 		dsserr("BTA was not received!");
 		return 1;
 	}
-	/*
-	    if(readl(&dsi->vc0_ctrl) & (1 << 20)) {
-	                        dsserr("<vc_dcs_write> RX FIFO not empty after write, dumping data:");
-	//                      vc_flush_receive_data(channel);
-	                        return 1;
-	    }
-	*/
+	
 	return 0;
 }
 
@@ -326,12 +278,10 @@ int vc_dcs_read(const int channel, u8 dcs_cmd, u8 *buf, int buflen)
 	if (vc_send_short(channel, DSI_DT_DCS_READ, dcs_cmd, 0))
 		goto err;
 
-//    r = dsi_vc_send_bta_sync(channel);
 	if (vc_send_bta(channel)) {
 		puts("ERROR: Failed to receive BTA!\n");
 		goto err;
-	} //else
-//        dssmsg("display_on BTA response is received... ok");
+	}
 
 	/* RX_FIFO_NOT_EMPTY */
 	if (!(readl(vc_ctrl) & (1 << 20))) {
@@ -342,12 +292,9 @@ int vc_dcs_read(const int channel, u8 dcs_cmd, u8 *buf, int buflen)
 	val = readl(vc_short_packet_header);
 
 	printf("\theader: %08x\n", val);
-//    dt = FLD_GET(val, 5, 0);
 	dt = val & 0x3f;
 
 	if (dt == DSI_DT_RX_ACK_WITH_ERR) {
-//            u16 err = FLD_GET(val, 23, 8);
-//            dsi_show_rx_ack_with_err(err);
 		puts("ERROR: dt = 0x02\n");
 		goto err;
 	} else if (dt == DSI_DT_RX_SHORT_READ_1) {
@@ -429,5 +376,4 @@ int enable_te(const int channel, int enable)
 		return vc_dcs_write(channel, &cmd, 1);
 	}
 }
-
 

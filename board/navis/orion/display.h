@@ -69,11 +69,6 @@
                                         DSI_CIO_IRQ_ERRCONTENTIONLP0_2 | DSI_CIO_IRQ_ERRCONTENTIONLP1_2 | \
                                         DSI_CIO_IRQ_ERRCONTENTIONLP0_3 | DSI_CIO_IRQ_ERRCONTENTIONLP1_3)
 
-
-
-
-
-
 #define EN_DSS			0
 #define EN_DSS1			0
 #define EN_DSS2			1
@@ -127,8 +122,6 @@
 /* DSI_VCn_IRQSTATUS */
 #define PACKET_SENT_IRQ		2
 
-
-
 #define DSI_DT_DCS_LONG_WRITE		0x39
 #define DSI_DT_DCS_SHORT_WRITE_0	0x05
 #define DSI_DT_DCS_SHORT_WRITE_1	0x15
@@ -143,7 +136,6 @@
 
 #define LP_CLK_DIVISOR				12
 #define LP_RX_SYNCHRO_ENABLE			21
-//#define DSS_SRC_DSS1_ALWON_FCLK                 2
 
 #define DCS_TEAR_OFF            		0x34
 #define DCS_TEAR_ON             		0x35
@@ -349,8 +341,6 @@ typedef enum {
 } bool;
 
 
-//DISPC
-
 static struct display_control {
 	struct dsi_engine_registers         *dsi;
 	struct dsi_pll_registers            *pll;
@@ -395,8 +385,6 @@ struct orion_display {
 		dss_clk_source dispc_clk_src;
 		dss_clk_source dsi_clk_src;
 		u32 fint;
-//		u32 dsi1_pll_fclk;
-//		u32 dsi2_pll_fclk;
 	} clocks;
 
 	enum tft_data_lines {
@@ -495,72 +483,6 @@ struct orion_graphics {
 };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-struct orion_device {
-	struct dsi_engine_registers* dsi;
-	struct dsi_pll_registers*            pll;
-	struct display_subsystem_registers* dss;
-
-};
-*/
-
-/*
-typedef enum {
-        l4_interconnect,
-        video_port
-} dsi_vc_port;
-
-typedef enum {
-        command_mode,
-        video_mode
-} dsi_vc_mode;
-
-typedef enum {
-        manual_bta,
-        automatic_bta
-} dsi_bta_mode;
-
-typedef enum {
-        dma_req0,
-        dma_req1,
-        dma_req2,
-        dma_req3,
-        no_dma
-} dsi_dma_req;
-
-
-enum dss_clock {
-        DSS_CLK_ICK     = 1 << 0,
-        DSS_CLK_FCK1    = 1 << 1,
-        DSS_CLK_FCK2    = 1 << 2,
-        DSS_CLK_54M     = 1 << 3,
-        DSS_CLK_96M     = 1 << 4,
-};
-*/
-
-//=========================================================================================
-
-
-
-
-
-
-
-
 #endif /*__ASSEMBLY__ */
 #endif /* __KERNEL_STRICT_NAMES */
-
 #endif
