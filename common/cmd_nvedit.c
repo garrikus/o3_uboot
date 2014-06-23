@@ -926,7 +926,7 @@ int do_test_pwr(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	if(!i)
 	{
-		printf("\n>TEST START!\n");
+		printf("\nTesting...\n");
 
 		for(; i < 40000; i++) udelay(1000);
 
