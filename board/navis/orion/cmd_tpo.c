@@ -1,3 +1,4 @@
+#include <common.h>
 #include <twl4030.h>
 #include <asm/io.h>
 #include <asm/arch-omap3/sys_proto.h>
@@ -181,7 +182,16 @@ int do_test_pwr(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	printf("\nTesting...\n");
 
-	for (i = 0; i < 40000; i++) udelay(1000);
+	/* Should be watching for input here. */
+	while(1) {
+		udelay(1000);
+
+		/* Get that char and get out !*/
+		if (tstc()) {
+			(void)getc();
+			break;
+		}
+	}
 
 	printf("\n>TEST DONE\r\n\n");
 
