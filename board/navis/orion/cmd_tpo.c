@@ -170,6 +170,10 @@ int do_test_pwr(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	char *cmd[]    = {"up", "check", "down"};
 
 	int i, j;
+	struct gpio *gpio1_base = (struct gpio *)OMAP34XX_GPIO1_BASE;
+
+	/* Set GPIO 29 as output pin */
+	writel(readl(&gpio1_base) & ~(GPIO29), &gpio1_base->oe);
 
 	for (j = 0; j < 2; j++) {
 		s[2] = cmd[j];
@@ -179,6 +183,9 @@ int do_test_pwr(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			do_mod_power(NULL, 0, 3, s);
 		}
 	}
+
+	/* Set GPIO 29 */
+	writel(GPIO29, &gpio1_base->setdataout);
 
 	printf("\nTesting...\n");
 
@@ -200,6 +207,8 @@ int do_test_pwr(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	do_mod_power(NULL, 0, 3, s);
 	s[1] = "vaux3";
 	do_mod_power(NULL, 0, 3, s);
+	/* Clear GPIO 29 */
+	writel(GPIO29, &gpio1_base->cleardataout);
 
 	return 0;
 }
