@@ -228,7 +228,7 @@
 	"sd2n_uImage=nandecc hw 1; sd2n uImage force\0"\
 	"sd2n_rootfs=nandecc hw 1; sd2n rootfs force\0"\
 	"sd2n_img=nandecc hw 1; sd2n img force\0"\
-	"sd2n_all=run sd2n_mlo; run sd2n_uboot; run sd2n_uImage; run sd2n_rootfs; run sd2n_img\0"\
+	"sd2n_all=run sd2n_mlo; run sd2n_uboot; run sd2n_uImage; run sd2n_rootfs; run sd2n_img; echo \">TEST DONE\"\0"\
 
 #define CONFIG_BOOTCOMMAND \
 	"if mmc init; then " \
