@@ -324,7 +324,6 @@ int do_test_runlin(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	strcpy((char *)str, (const char *)s);
 	setenv("nandargs", (char *)str);
-	printf("\n>TEST DONE\n");
 
 	parse_string_outer(getenv("bootcmd"), FLAG_PARSE_SEMICOLON | FLAG_EXIT_FROM_LOOP);
 
