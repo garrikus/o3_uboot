@@ -457,6 +457,7 @@ U_BOOT_CMD(
         "panel reset  - hard reset DSI\n"
 );
 
+#define __PASS_STRING "dinamit"
 int do_setmode(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	DECLARE_GLOBAL_DATA_PTR;
@@ -471,7 +472,8 @@ int do_setmode(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		}
 	}
 
-	if (!strncmp(argv[1], "dinamit", sizeof(argv[1]))) {
+	/* XXX: We shouldn't get here with argv[1] == NULL */
+	if (!strncmp(argv[1], __PASS_STRING, strlen(argv[1]))) {
 		gd->flags &= ~GD_FLG_TEST_MODE;
 		puts("Welcome!!!\n");
 	} else
