@@ -491,7 +491,7 @@ int do_setmode(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	}
 
 	/* XXX: We shouldn't get here with argv[1] == NULL */
-	if (!strncmp(argv[1], __PASS_STRING, strlen(argv[1]))) {
+	if (!strncmp(argv[1], __PASS_STRING, strlen(__PASS_STRING) + 1)) {
 		gd->flags &= ~GD_FLG_TEST_MODE;
 		puts("Welcome!!!\n");
 	} else
