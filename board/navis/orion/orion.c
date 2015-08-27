@@ -648,7 +648,7 @@ static void set_picture_to_display(void)
 	do_nand(NULL, 0, 5, s);
 	magnum = readl(simple_strtoul(BUFF_ADDR, NULL, 16));
 
-	if (magnum == gd->mnumber) {
+	if (1 || magnum == gd->mnumber) {
 		sprintf(maddr, "%x", (unsigned int)gd->fb_base);
 		sprintf(msize, "%x", get_addr((unsigned int)img1));
 		s[2] = maddr;
@@ -675,7 +675,7 @@ static void set_picture_to_display(void)
 
 	puts("Panel Update ... done.\n");
 
-	if (magnum == gd->mnumber) {
+	if (1 || magnum == gd->mnumber) {
 		/* load_pic_to_frame */
 		sprintf(msize, "%x", get_addr((unsigned int)img2));
 		s[3] = msize;
