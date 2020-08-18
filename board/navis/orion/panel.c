@@ -2,6 +2,7 @@
 #include "display.h"
 
 #define VC0			0
+#define TCH			VC0
 #define SLEEP_OUT		0x11
 #define DISPLAY_ON		0x29
 
@@ -118,40 +119,311 @@ error:
 	return 1;
 }
 
-// common setting //
-unsigned char SETEXTC[4]  = {
-	0xB9, 0xFF, 0x83, 0x69
+
+/************************ NEW LCD *******************************/
+static unsigned char cmd_cmd2bkxsel_0x13[] = {
+	0xFF, 0x77, 0x01, 0x00,
+	0x00, 0x13
+	/* FIXME: 0x13 is not something suggested by ST7701S TRM */
 };
-unsigned char SETPOWER[]  = {
-	0xb1, 0x85, 0x00, 0x25,
-	0x06, 0x00, 0x0f, 0x0f,
-	0x2a, 0x32, 0x3f, 0x3f,
-	0x01, 0x3a, 0x01, 0xe6,
-	0xe6, 0xe6, 0xe6, 0xe6
+static unsigned char cmd_unknown_ef_bk3[] = {
+	0xEF, 0x08
 };
-unsigned char SETMIPI[14] = {
-	0xBA, 0x00, 0xA0, 0xC6,
-	0x00, 0x0A, 0x00, 0x10,
-	0x30, 0x6F, 0x02, 0x11,
-	0x18, 0x40,
-};
-// command mode setting //
-// Put 10ms after //
-unsigned char SETGIP[27] = {
-	0xD5, 0x00, 0x04, 0x03,
-	0x00, 0x01, 0x05, 0x28,
-	0x70, 0x01, 0x03, 0x00,
-	0x00, 0x40, 0x06, 0x51,
-	0x07, 0x00, 0x00, 0x41,
-	0x06, 0x50, 0x07, 0x07,
-	0x0F, 0x04, 0x00
+static unsigned char cmd_cmd2bkxsel_0x10[] = {
+	0xFF, 0x77, 0x01, 0x00,
+	0x00, 0x10
 };
 
-unsigned char SETTPSNR[11] = {
-	0xD8, 0x00, 0x12, 0x66,
-	0x66, 0x09, 0x67, 0x50,
-	0x4E, 0x57, 0x75
+static unsigned char cmd_lneset[] = {
+	0xC0, 0x63, 0x00
 };
+
+static unsigned char cmd_porctrl[] = {
+	0xC1, 0x10, 0x06
+};
+
+static unsigned char cmd_invset[] = {
+	0xC2, 0x01, 0x02
+};
+
+static unsigned char cmd_unknown_cc[] = {
+	0xCC, 0x10
+};
+
+static unsigned char cmd_pvgamctrl[] = {
+	0xB0, 0xC0, 0x0C, 0x92,
+	0x0C, 0x10, 0x05, 0x02,
+	0x0D, 0x07, 0x21, 0x04,
+	0x53, 0x11, 0x6A, 0x32,
+	0x1F
+};
+
+static unsigned char cmd_nvgamctrl[] = {
+	0xB1, 0xC0, 0x87, 0xCF,
+	0x0C, 0x10, 0x06, 0x00,
+	0x03, 0x08, 0x1D, 0x06,
+	0x54, 0x12, 0xE6, 0xEC,
+	0x0F
+};
+
+static unsigned char cmd_cmd2bkxsel_0x11[] = {
+	0xFF, 0x77, 0x01, 0x00,
+	0x00, 0x11
+};
+
+static unsigned char cmd_vrhs[] = {
+	0xB0, 0x5D
+};
+
+static unsigned char cmd_vcoms[] = {
+	0xB1, 0x52
+};
+
+static unsigned char cmd_vghss[] = {
+	0xB2, 0x87
+};
+
+static unsigned char cmd_testcmd[] = {
+	0xB3, 0x80
+};
+
+static unsigned char cmd_vgls[] = {
+	0xB5, 0x4E
+};
+
+static unsigned char cmd_pwctrl1[] = {
+	0xB7, 0x85
+};
+
+static unsigned char cmd_pwctrl2[] = {
+	0xB8, 0x20
+};
+
+//SPI_WriteComm(0xC0);    //
+//SPI_WriteData(0x09);   //
+
+static unsigned char cmd_spd1[] = {
+	0xC1, 0x78
+};
+
+static unsigned char cmd_spd2[] = {
+	0xC2, 0x78
+};
+
+static unsigned char cmd_mipiset1[] = {
+	0xD0, 0x88
+};
+
+static unsigned char cmd_unknown_ee[] = {
+	0xEE, 0x42
+};
+
+static unsigned char cmd_unknown_e0[] = {
+	0xE0, 0x00, 0x00, 0x02
+};
+
+static unsigned char cmd_unknown_e1[] = {
+	0xE1, 0x04, 0xA0, 0x06,
+	0xA0, 0x05, 0xA0, 0x07,
+	0xA0, 0x00, 0x44, 0x44
+};
+
+static unsigned char cmd_unknown_e2[] = {
+	0xE2, 0x00, 0x00, 0x33,
+	0x33, 0x01, 0xA0, 0x00,
+	0x00, 0x01, 0xA0, 0x00,
+	0x00
+};
+
+static unsigned char cmd_unknown_e3[] = {
+	0xE3, 0x00, 0x00, 0x33,
+	0x33
+};
+
+static unsigned char cmd_unknown_e4[] = {
+	0xE4, 0x44, 0x44
+};
+
+static unsigned char cmd_unknown_e5[] = {
+	0xE5, 0x0C, 0x30, 0xA0,
+	0xA0, 0x0E, 0x32, 0xA0,
+	0xA0, 0x08, 0x2C, 0xA0,
+	0xA0, 0x0A, 0x2E, 0xA0,
+	0xA0
+};
+
+static unsigned char cmd_unknown_e6[] = {
+	0xE6, 0x00, 0x00, 0x33,
+	0x33
+};
+
+static unsigned char cmd_unknown_e7[] = {
+	0xE7, 0x44, 0x44
+};
+
+static unsigned char cmd_unknown_e8[] = {
+	0xE8, 0x0D, 0x31, 0xA0,
+	0xA0, 0x0F, 0x33, 0xA0,
+	0xA0, 0x09, 0x2D, 0xA0,
+	0xA0, 0x0B, 0x2F, 0xA0,
+	0xA0
+};
+
+static unsigned char cmd_unknown_eb[] = {
+	0xEB, 0x00, 0x00, 0xE4,
+	0xE4, 0x44, 0x88, 0x00
+};
+
+static unsigned char cmd_unknown_ed[] = {
+	0xED, 0xFF, 0xF5, 0x47,
+	0x6F, 0x0B, 0xA1, 0xA2,
+	0xBF, 0xFB, 0x2A, 0x1A,
+	0xB0, 0xF6, 0x74, 0x5F,
+	0xFF
+};
+
+static unsigned char cmd_unknown_ef_bk1[] = {
+	0xEF, 0x08, 0x08, 0x08,
+	0x45, 0x3F, 0x54
+};
+
+static unsigned char cmd_cmd2bkxsel_0x00[] = {
+	0xFF, 0x77, 0x01, 0x00,
+	0x00, 0x00
+};
+
+static unsigned char cmd_madctl[] = {
+	0x36, 0x00
+};
+
+#define TAAL_DSI_WR(x) (vc_dcs_write((TCH), (x), sizeof (x)))
+
+static void send_periph_init_sequnce(void)
+{
+	int r  = 0;
+
+	/********* Cmd2BK3 set **************/
+	r = TAAL_DSI_WR(cmd_cmd2bkxsel_0x13);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_ef_bk3);
+	if (r)
+		goto err;
+
+	/********* Cmd2BK0 set **************/
+	r = TAAL_DSI_WR(cmd_cmd2bkxsel_0x10);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_lneset);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_porctrl);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_invset);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_cc);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_pvgamctrl);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_nvgamctrl);
+	if (r)
+		goto err;
+
+	/********* Cmd2BK1 set **************/
+	r = TAAL_DSI_WR(cmd_cmd2bkxsel_0x11);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_vrhs);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_vcoms);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_vghss);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_testcmd);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_vgls);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_pwctrl1);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_pwctrl2);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_spd1);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_spd2);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_mipiset1);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_ee);
+	if (r)
+		goto err;
+
+	udelay(100000);
+
+	r = TAAL_DSI_WR(cmd_unknown_e0);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_e1);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_e2);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_e3);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_e4);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_e5);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_e6);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_e7);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_e8);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_eb);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_ed);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_unknown_ef_bk1);
+	if (r)
+		goto err;
+
+
+	/********* Cmd2-NOBK **************/
+	r = TAAL_DSI_WR(cmd_cmd2bkxsel_0x00);
+	if (r)
+		goto err;
+	r = TAAL_DSI_WR(cmd_madctl);
+	if (r)
+		goto err;
+
+	return 0;
+
+err:
+	return r;
+}
 
 int panel_init(void)
 {
@@ -163,16 +435,7 @@ int panel_init(void)
 	enable_vc_irq(VC0, PACKET_SENT_IRQ, ENABLE);
 	vc_enable_hs_mode(VC0, DISABLE);
 
-	if (vc_dcs_write(VC0, SETEXTC, sizeof(SETEXTC)))
-		return 1;
-	if (vc_dcs_write(VC0, SETPOWER, sizeof(SETPOWER)))
-		return 1;
-	if (vc_dcs_write(VC0, SETGIP, sizeof(SETGIP)))
-		return 1;
-	if (vc_dcs_write(VC0, SETTPSNR, sizeof(SETTPSNR)))
-		return 1;
-	if (vc_dcs_write(VC0, SETMIPI, sizeof(SETMIPI)))
-		return 1;
+	send_periph_init_sequnce();
 
 	u8 command = SLEEP_OUT;
 
