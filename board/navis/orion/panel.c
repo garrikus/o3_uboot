@@ -425,6 +425,7 @@ err:
 	return r;
 }
 
+#define DCS_ALLPON		0x23
 int panel_init(void)
 {
 	if (orion_display_enable()) {
@@ -444,6 +445,10 @@ int panel_init(void)
 
 	command = DISPLAY_ON;
 
+	if (vc_dcs_write(VC0, &command, sizeof(command)))
+		return 1;
+
+	command = DCS_ALLPON;
 	if (vc_dcs_write(VC0, &command, sizeof(command)))
 		return 1;
 
