@@ -105,6 +105,23 @@ static void vaux4_on(void)
 	printf(" done.\n");
 }
 
+
+#define DSI_IS_COMMAND_MODE 0
+#define DSI_IS_VIDEO_MODE   1
+#define DSI_MODE_GPIO_NR    178
+static void set_dsi_mode(unsigned mode)
+{
+	struct gpio *gpio_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
+
+	/* 178 % 32 = 18 */
+	/* Make GPIO 180 as output pin */
+	writel(readl(&gpio_base->oe) & ~(GPIO18), &gpio_base->oe);
+	if (mode)
+		writel(GPIO18, &gpio_base->setdataout);
+	else
+		writel(GPIO18, &gpio_base->cleardataout);
+}
+
 inline void reset_for_dsi(void)
 {
 	if (getenv("board")) {
@@ -113,6 +130,8 @@ inline void reset_for_dsi(void)
 	} else {
 
 		struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
+
+		set_dsi_mode(DSI_IS_COMMAND_MODE);
 
 		/* Make GPIO 180 as output pin */
 		writel(readl(&gpio6_base->oe) & ~(GPIO20), &gpio6_base->oe);
