@@ -687,13 +687,6 @@ static void set_picture_to_display(void)
 
 	puts("Panel Init   ... done.\n");
 
-	if (panel_update()) {
-		puts("DSS ERROR:  panel don't update!\n");
-		return;
-	}
-
-	puts("Panel Update ... done.\n");
-
 	if (1 || magnum == gd->mnumber) {
 		/* load_pic_to_frame */
 		sprintf(msize, "%x", get_addr((unsigned int)img2));
