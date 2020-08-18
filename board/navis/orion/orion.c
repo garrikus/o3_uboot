@@ -106,8 +106,8 @@ static void vaux4_on(void)
 }
 
 
-#define DSI_IS_COMMAND_MODE 0
-#define DSI_IS_VIDEO_MODE   1
+#define DSI_IS_COMMAND_MODE 1
+#define DSI_IS_VIDEO_MODE   0
 #define DSI_MODE_GPIO_NR    178
 static void set_dsi_mode(unsigned mode)
 {
